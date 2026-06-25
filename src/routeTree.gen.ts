@@ -27,9 +27,12 @@ import { Route as AuthenticatedProfesseurParcoursRouteImport } from './routes/_a
 import { Route as AuthenticatedProfesseurModulesRouteImport } from './routes/_authenticated/professeur.modules'
 import { Route as AuthenticatedProfesseurMissionsRouteImport } from './routes/_authenticated/professeur.missions'
 import { Route as AuthenticatedProfesseurEtudiantsRouteImport } from './routes/_authenticated/professeur.etudiants'
+import { Route as AuthenticatedPartenaireParcoursRouteImport } from './routes/_authenticated/partenaire.parcours'
 import { Route as AuthenticatedPartenaireMissionsRouteImport } from './routes/_authenticated/partenaire.missions'
 import { Route as AuthenticatedPartenaireEtudiantsRouteImport } from './routes/_authenticated/partenaire.etudiants'
+import { Route as AuthenticatedEtudiantSessionsRouteImport } from './routes/_authenticated/etudiant.sessions'
 import { Route as AuthenticatedEtudiantParcoursRouteImport } from './routes/_authenticated/etudiant.parcours'
+import { Route as AuthenticatedEtudiantNotificationsRouteImport } from './routes/_authenticated/etudiant.notifications'
 import { Route as AuthenticatedEtudiantGroupeRouteImport } from './routes/_authenticated/etudiant.groupe'
 import { Route as AuthenticatedEtudiantCarnetRouteImport } from './routes/_authenticated/etudiant.carnet'
 import { Route as AuthenticatedEtudiantBadgesRouteImport } from './routes/_authenticated/etudiant.badges'
@@ -40,10 +43,13 @@ import { Route as AuthenticatedAdminProfesseursRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminPartenairesRouteImport } from './routes/_authenticated/admin.partenaires'
 import { Route as AuthenticatedAdminParcoursRouteImport } from './routes/_authenticated/admin.parcours'
 import { Route as AuthenticatedAdminParametresRouteImport } from './routes/_authenticated/admin.parametres'
+import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin.notifications'
 import { Route as AuthenticatedAdminMissionsRouteImport } from './routes/_authenticated/admin.missions'
+import { Route as AuthenticatedAdminGroupesRouteImport } from './routes/_authenticated/admin.groupes'
 import { Route as AuthenticatedAdminEtudiantsRouteImport } from './routes/_authenticated/admin.etudiants'
 import { Route as AuthenticatedAdminCahierDeTexteRouteImport } from './routes/_authenticated/admin.cahier-de-texte'
 import { Route as AuthenticatedAdminBibliothequeRouteImport } from './routes/_authenticated/admin.bibliotheque'
+import { Route as AuthenticatedAdminBadgesRouteImport } from './routes/_authenticated/admin.badges'
 import { Route as AuthenticatedProfesseurParcoursParcoursIdRouteImport } from './routes/_authenticated/professeur.parcours.$parcoursId'
 import { Route as AuthenticatedProfesseurCarnetEtudiantIdParcoursIdRouteImport } from './routes/_authenticated/professeur.carnet.$etudiantId.$parcoursId'
 
@@ -143,6 +149,12 @@ const AuthenticatedProfesseurEtudiantsRoute =
     path: '/etudiants',
     getParentRoute: () => AuthenticatedProfesseurRoute,
   } as any)
+const AuthenticatedPartenaireParcoursRoute =
+  AuthenticatedPartenaireParcoursRouteImport.update({
+    id: '/parcours',
+    path: '/parcours',
+    getParentRoute: () => AuthenticatedPartenaireRoute,
+  } as any)
 const AuthenticatedPartenaireMissionsRoute =
   AuthenticatedPartenaireMissionsRouteImport.update({
     id: '/missions',
@@ -155,10 +167,22 @@ const AuthenticatedPartenaireEtudiantsRoute =
     path: '/etudiants',
     getParentRoute: () => AuthenticatedPartenaireRoute,
   } as any)
+const AuthenticatedEtudiantSessionsRoute =
+  AuthenticatedEtudiantSessionsRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => AuthenticatedEtudiantRoute,
+  } as any)
 const AuthenticatedEtudiantParcoursRoute =
   AuthenticatedEtudiantParcoursRouteImport.update({
     id: '/parcours',
     path: '/parcours',
+    getParentRoute: () => AuthenticatedEtudiantRoute,
+  } as any)
+const AuthenticatedEtudiantNotificationsRoute =
+  AuthenticatedEtudiantNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
     getParentRoute: () => AuthenticatedEtudiantRoute,
   } as any)
 const AuthenticatedEtudiantGroupeRoute =
@@ -221,10 +245,22 @@ const AuthenticatedAdminParametresRoute =
     path: '/parametres',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminNotificationsRoute =
+  AuthenticatedAdminNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminMissionsRoute =
   AuthenticatedAdminMissionsRouteImport.update({
     id: '/missions',
     path: '/missions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminGroupesRoute =
+  AuthenticatedAdminGroupesRouteImport.update({
+    id: '/groupes',
+    path: '/groupes',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminEtudiantsRoute =
@@ -243,6 +279,12 @@ const AuthenticatedAdminBibliothequeRoute =
   AuthenticatedAdminBibliothequeRouteImport.update({
     id: '/bibliotheque',
     path: '/bibliotheque',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminBadgesRoute =
+  AuthenticatedAdminBadgesRouteImport.update({
+    id: '/badges',
+    path: '/badges',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedProfesseurParcoursParcoursIdRoute =
@@ -269,10 +311,13 @@ export interface FileRoutesByFullPath {
   '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/admin/badges': typeof AuthenticatedAdminBadgesRoute
   '/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
+  '/admin/groupes': typeof AuthenticatedAdminGroupesRoute
   '/admin/missions': typeof AuthenticatedAdminMissionsRoute
+  '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/admin/parcours': typeof AuthenticatedAdminParcoursRoute
   '/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
@@ -283,9 +328,12 @@ export interface FileRoutesByFullPath {
   '/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
+  '/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/partenaire/parcours': typeof AuthenticatedPartenaireParcoursRoute
   '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
@@ -307,10 +355,13 @@ export interface FileRoutesByTo {
   '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/admin/badges': typeof AuthenticatedAdminBadgesRoute
   '/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
+  '/admin/groupes': typeof AuthenticatedAdminGroupesRoute
   '/admin/missions': typeof AuthenticatedAdminMissionsRoute
+  '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/admin/parcours': typeof AuthenticatedAdminParcoursRoute
   '/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
@@ -321,9 +372,12 @@ export interface FileRoutesByTo {
   '/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
+  '/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/partenaire/parcours': typeof AuthenticatedPartenaireParcoursRoute
   '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
@@ -347,10 +401,13 @@ export interface FileRoutesById {
   '/_authenticated/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/_authenticated/admin/badges': typeof AuthenticatedAdminBadgesRoute
   '/_authenticated/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/_authenticated/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/_authenticated/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
+  '/_authenticated/admin/groupes': typeof AuthenticatedAdminGroupesRoute
   '/_authenticated/admin/missions': typeof AuthenticatedAdminMissionsRoute
+  '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/_authenticated/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/_authenticated/admin/parcours': typeof AuthenticatedAdminParcoursRoute
   '/_authenticated/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
@@ -361,9 +418,12 @@ export interface FileRoutesById {
   '/_authenticated/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/_authenticated/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/_authenticated/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
+  '/_authenticated/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/_authenticated/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/_authenticated/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/_authenticated/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/_authenticated/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/_authenticated/partenaire/parcours': typeof AuthenticatedPartenaireParcoursRoute
   '/_authenticated/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/_authenticated/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/_authenticated/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
@@ -387,10 +447,13 @@ export interface FileRouteTypes {
     | '/professeur'
     | '/profil'
     | '/auth/reset-password'
+    | '/admin/badges'
     | '/admin/bibliotheque'
     | '/admin/cahier-de-texte'
     | '/admin/etudiants'
+    | '/admin/groupes'
     | '/admin/missions'
+    | '/admin/notifications'
     | '/admin/parametres'
     | '/admin/parcours'
     | '/admin/partenaires'
@@ -401,9 +464,12 @@ export interface FileRouteTypes {
     | '/etudiant/badges'
     | '/etudiant/carnet'
     | '/etudiant/groupe'
+    | '/etudiant/notifications'
     | '/etudiant/parcours'
+    | '/etudiant/sessions'
     | '/partenaire/etudiants'
     | '/partenaire/missions'
+    | '/partenaire/parcours'
     | '/professeur/etudiants'
     | '/professeur/missions'
     | '/professeur/modules'
@@ -425,10 +491,13 @@ export interface FileRouteTypes {
     | '/professeur'
     | '/profil'
     | '/auth/reset-password'
+    | '/admin/badges'
     | '/admin/bibliotheque'
     | '/admin/cahier-de-texte'
     | '/admin/etudiants'
+    | '/admin/groupes'
     | '/admin/missions'
+    | '/admin/notifications'
     | '/admin/parametres'
     | '/admin/parcours'
     | '/admin/partenaires'
@@ -439,9 +508,12 @@ export interface FileRouteTypes {
     | '/etudiant/badges'
     | '/etudiant/carnet'
     | '/etudiant/groupe'
+    | '/etudiant/notifications'
     | '/etudiant/parcours'
+    | '/etudiant/sessions'
     | '/partenaire/etudiants'
     | '/partenaire/missions'
+    | '/partenaire/parcours'
     | '/professeur/etudiants'
     | '/professeur/missions'
     | '/professeur/modules'
@@ -464,10 +536,13 @@ export interface FileRouteTypes {
     | '/_authenticated/professeur'
     | '/_authenticated/profil'
     | '/auth/reset-password'
+    | '/_authenticated/admin/badges'
     | '/_authenticated/admin/bibliotheque'
     | '/_authenticated/admin/cahier-de-texte'
     | '/_authenticated/admin/etudiants'
+    | '/_authenticated/admin/groupes'
     | '/_authenticated/admin/missions'
+    | '/_authenticated/admin/notifications'
     | '/_authenticated/admin/parametres'
     | '/_authenticated/admin/parcours'
     | '/_authenticated/admin/partenaires'
@@ -478,9 +553,12 @@ export interface FileRouteTypes {
     | '/_authenticated/etudiant/badges'
     | '/_authenticated/etudiant/carnet'
     | '/_authenticated/etudiant/groupe'
+    | '/_authenticated/etudiant/notifications'
     | '/_authenticated/etudiant/parcours'
+    | '/_authenticated/etudiant/sessions'
     | '/_authenticated/partenaire/etudiants'
     | '/_authenticated/partenaire/missions'
+    | '/_authenticated/partenaire/parcours'
     | '/_authenticated/professeur/etudiants'
     | '/_authenticated/professeur/missions'
     | '/_authenticated/professeur/modules'
@@ -627,6 +705,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfesseurEtudiantsRouteImport
       parentRoute: typeof AuthenticatedProfesseurRoute
     }
+    '/_authenticated/partenaire/parcours': {
+      id: '/_authenticated/partenaire/parcours'
+      path: '/parcours'
+      fullPath: '/partenaire/parcours'
+      preLoaderRoute: typeof AuthenticatedPartenaireParcoursRouteImport
+      parentRoute: typeof AuthenticatedPartenaireRoute
+    }
     '/_authenticated/partenaire/missions': {
       id: '/_authenticated/partenaire/missions'
       path: '/missions'
@@ -641,11 +726,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPartenaireEtudiantsRouteImport
       parentRoute: typeof AuthenticatedPartenaireRoute
     }
+    '/_authenticated/etudiant/sessions': {
+      id: '/_authenticated/etudiant/sessions'
+      path: '/sessions'
+      fullPath: '/etudiant/sessions'
+      preLoaderRoute: typeof AuthenticatedEtudiantSessionsRouteImport
+      parentRoute: typeof AuthenticatedEtudiantRoute
+    }
     '/_authenticated/etudiant/parcours': {
       id: '/_authenticated/etudiant/parcours'
       path: '/parcours'
       fullPath: '/etudiant/parcours'
       preLoaderRoute: typeof AuthenticatedEtudiantParcoursRouteImport
+      parentRoute: typeof AuthenticatedEtudiantRoute
+    }
+    '/_authenticated/etudiant/notifications': {
+      id: '/_authenticated/etudiant/notifications'
+      path: '/notifications'
+      fullPath: '/etudiant/notifications'
+      preLoaderRoute: typeof AuthenticatedEtudiantNotificationsRouteImport
       parentRoute: typeof AuthenticatedEtudiantRoute
     }
     '/_authenticated/etudiant/groupe': {
@@ -718,11 +817,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminParametresRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/notifications': {
+      id: '/_authenticated/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AuthenticatedAdminNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/missions': {
       id: '/_authenticated/admin/missions'
       path: '/missions'
       fullPath: '/admin/missions'
       preLoaderRoute: typeof AuthenticatedAdminMissionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/groupes': {
+      id: '/_authenticated/admin/groupes'
+      path: '/groupes'
+      fullPath: '/admin/groupes'
+      preLoaderRoute: typeof AuthenticatedAdminGroupesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/etudiants': {
@@ -746,6 +859,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBibliothequeRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/badges': {
+      id: '/_authenticated/admin/badges'
+      path: '/badges'
+      fullPath: '/admin/badges'
+      preLoaderRoute: typeof AuthenticatedAdminBadgesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/professeur/parcours/$parcoursId': {
       id: '/_authenticated/professeur/parcours/$parcoursId'
       path: '/$parcoursId'
@@ -764,10 +884,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminBadgesRoute: typeof AuthenticatedAdminBadgesRoute
   AuthenticatedAdminBibliothequeRoute: typeof AuthenticatedAdminBibliothequeRoute
   AuthenticatedAdminCahierDeTexteRoute: typeof AuthenticatedAdminCahierDeTexteRoute
   AuthenticatedAdminEtudiantsRoute: typeof AuthenticatedAdminEtudiantsRoute
+  AuthenticatedAdminGroupesRoute: typeof AuthenticatedAdminGroupesRoute
   AuthenticatedAdminMissionsRoute: typeof AuthenticatedAdminMissionsRoute
+  AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
   AuthenticatedAdminParametresRoute: typeof AuthenticatedAdminParametresRoute
   AuthenticatedAdminParcoursRoute: typeof AuthenticatedAdminParcoursRoute
   AuthenticatedAdminPartenairesRoute: typeof AuthenticatedAdminPartenairesRoute
@@ -778,10 +901,13 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminBadgesRoute: AuthenticatedAdminBadgesRoute,
   AuthenticatedAdminBibliothequeRoute: AuthenticatedAdminBibliothequeRoute,
   AuthenticatedAdminCahierDeTexteRoute: AuthenticatedAdminCahierDeTexteRoute,
   AuthenticatedAdminEtudiantsRoute: AuthenticatedAdminEtudiantsRoute,
+  AuthenticatedAdminGroupesRoute: AuthenticatedAdminGroupesRoute,
   AuthenticatedAdminMissionsRoute: AuthenticatedAdminMissionsRoute,
+  AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
   AuthenticatedAdminParametresRoute: AuthenticatedAdminParametresRoute,
   AuthenticatedAdminParcoursRoute: AuthenticatedAdminParcoursRoute,
   AuthenticatedAdminPartenairesRoute: AuthenticatedAdminPartenairesRoute,
@@ -798,14 +924,19 @@ interface AuthenticatedEtudiantRouteChildren {
   AuthenticatedEtudiantBadgesRoute: typeof AuthenticatedEtudiantBadgesRoute
   AuthenticatedEtudiantCarnetRoute: typeof AuthenticatedEtudiantCarnetRoute
   AuthenticatedEtudiantGroupeRoute: typeof AuthenticatedEtudiantGroupeRoute
+  AuthenticatedEtudiantNotificationsRoute: typeof AuthenticatedEtudiantNotificationsRoute
   AuthenticatedEtudiantParcoursRoute: typeof AuthenticatedEtudiantParcoursRoute
+  AuthenticatedEtudiantSessionsRoute: typeof AuthenticatedEtudiantSessionsRoute
 }
 
 const AuthenticatedEtudiantRouteChildren: AuthenticatedEtudiantRouteChildren = {
   AuthenticatedEtudiantBadgesRoute: AuthenticatedEtudiantBadgesRoute,
   AuthenticatedEtudiantCarnetRoute: AuthenticatedEtudiantCarnetRoute,
   AuthenticatedEtudiantGroupeRoute: AuthenticatedEtudiantGroupeRoute,
+  AuthenticatedEtudiantNotificationsRoute:
+    AuthenticatedEtudiantNotificationsRoute,
   AuthenticatedEtudiantParcoursRoute: AuthenticatedEtudiantParcoursRoute,
+  AuthenticatedEtudiantSessionsRoute: AuthenticatedEtudiantSessionsRoute,
 }
 
 const AuthenticatedEtudiantRouteWithChildren =
@@ -816,6 +947,7 @@ const AuthenticatedEtudiantRouteWithChildren =
 interface AuthenticatedPartenaireRouteChildren {
   AuthenticatedPartenaireEtudiantsRoute: typeof AuthenticatedPartenaireEtudiantsRoute
   AuthenticatedPartenaireMissionsRoute: typeof AuthenticatedPartenaireMissionsRoute
+  AuthenticatedPartenaireParcoursRoute: typeof AuthenticatedPartenaireParcoursRoute
 }
 
 const AuthenticatedPartenaireRouteChildren: AuthenticatedPartenaireRouteChildren =
@@ -823,6 +955,7 @@ const AuthenticatedPartenaireRouteChildren: AuthenticatedPartenaireRouteChildren
     AuthenticatedPartenaireEtudiantsRoute:
       AuthenticatedPartenaireEtudiantsRoute,
     AuthenticatedPartenaireMissionsRoute: AuthenticatedPartenaireMissionsRoute,
+    AuthenticatedPartenaireParcoursRoute: AuthenticatedPartenaireParcoursRoute,
   }
 
 const AuthenticatedPartenaireRouteWithChildren =

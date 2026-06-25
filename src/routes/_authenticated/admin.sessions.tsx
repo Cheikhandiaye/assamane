@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CalendarCheck, Loader2, Plus, X } from "lucide-react";
+import { CalendarCheck, Loader2, Plus, X, Users } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/sessions")({ component: Page });
@@ -22,6 +22,23 @@ function Page() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ parcours_id: "", professeur_id: "", date_session: "", heure_debut: "", heure_fin: "" });
+  const [presOpen, setPresOpen] = useState(false);
+  const [presSession, setPresSession] = useState<any>(null);
+  const [presRows, setPresRows] = useState<{ etudiant_id: string; full_name: string | null; present: boolean }[]>([]);
+
+  async function openPresences(s: any) {
+    setPresSession(s); setPresOpen(true); setPresRows([]);
+    const { data: insc } = await supabase.from("parcours_etudiants").select("etudiant_id, profiles:etudiant_id(full_name)").eq("parcours_id", s.parcours_id);
+    const { data: pres } = await supabase.from("presences").select("etudiant_id, present").eq("session_id", s.id);
+    const map = new Map((pres ?? []).map((p) => [p.etudiant_id, p.present]));
+    setPresRows((insc ?? []).map((i: any) => ({ etudiant_id: i.etudiant_id, full_name: i.profiles?.full_name ?? null, present: map.get(i.etudiant_id) ?? false })));
+  }
+
+  async function togglePresence(etudiant_id: string, present: boolean) {
+    if (!presSession) return;
+    await supabase.from("presences").upsert({ session_id: presSession.id, etudiant_id, present }, { onConflict: "session_id,etudiant_id" });
+    setPresRows((p) => p.map((r) => (r.etudiant_id === etudiant_id ? { ...r, present } : r)));
+  }
 
   async function load() {
     const [{ data }, { data: pc }, { data: pf }] = await Promise.all([
@@ -59,7 +76,10 @@ function Page() {
                 <td className="p-3">{r.parcours?.nom}</td>
                 <td className="p-3">{r.profiles?.full_name}</td>
                 <td className="p-3"><Badge variant={r.statut === "ouverte" ? "default" : "secondary"}>{r.statut}</Badge></td>
-                <td className="p-3">{r.statut === "ouverte" && <Button size="sm" variant="outline" onClick={() => cloturer(r.id)}><X size={12} className="mr-1" />Clôturer</Button>}</td>
+                <td className="p-3 flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openPresences(r)}><Users size={12} className="mr-1" />Présences</Button>
+                  {r.statut === "ouverte" && <Button size="sm" variant="outline" onClick={() => cloturer(r.id)}><X size={12} className="mr-1" />Clôturer</Button>}
+                </td>
               </tr>
             ))}</tbody>
           </table>
@@ -88,6 +108,23 @@ function Page() {
             </div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button><Button onClick={create}>Créer</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={presOpen} onOpenChange={setPresOpen}>
+        <DialogContent className="max-h-[80vh] overflow-auto">
+          <DialogHeader><DialogTitle>Présences — {presSession?.date_session}</DialogTitle></DialogHeader>
+          {presRows.length === 0 ? <p className="text-sm text-muted-foreground">Aucun étudiant inscrit au parcours.</p> : (
+            <ul className="divide-y divide-border">{presRows.map((r) => (
+              <li key={r.etudiant_id} className="flex items-center justify-between py-2">
+                <span className="text-sm">{r.full_name ?? r.etudiant_id.slice(0, 8)}</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant={r.present ? "default" : "outline"} onClick={() => togglePresence(r.etudiant_id, true)}>Présent</Button>
+                  <Button size="sm" variant={!r.present ? "default" : "outline"} onClick={() => togglePresence(r.etudiant_id, false)}>Absent</Button>
+                </div>
+              </li>
+            ))}</ul>
+          )}
+          <DialogFooter><Button onClick={() => setPresOpen(false)}>Fermer</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </AssirikShell>
