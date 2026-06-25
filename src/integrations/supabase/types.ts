@@ -1293,6 +1293,17 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_partenaire_of_mission: {
+        Args: { _mission_id: string }
+        Returns: boolean
+      }
+      is_prof_of_mission: { Args: { _mission_id: string }; Returns: boolean }
+      is_prof_of_parcours: { Args: { _parcours_id: string }; Returns: boolean }
+      is_student_of_mission: { Args: { _mission_id: string }; Returns: boolean }
+      is_student_of_parcours: {
+        Args: { _parcours_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "professeur" | "etudiant" | "partenaire"
