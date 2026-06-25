@@ -137,7 +137,7 @@ function CarnetPage() {
       }
     }
     const payload: any = { contenu, statut: submit ? "soumis" : "brouillon" };
-    let result;
+    let result: any;
     if (etape.type === "groupe") {
       const groupe = pid ? groupes[pid] : undefined;
       if (!groupe) { setSaving(null); toast.error("Tu n'es pas membre d'un groupe pour ce parcours."); return; }
