@@ -22,8 +22,7 @@ import {
   Trophy,
   type LucideIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { useEffect, useState as useStateAlias } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, type AppRole } from "@/hooks/use-current-user";
 import { NotificationBell } from "@/components/notification-panel";
