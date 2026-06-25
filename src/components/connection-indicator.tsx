@@ -13,13 +13,3 @@ export function ConnectionIndicator() {
     />
   );
 }
-
-export function OfflineBanner() {
-  const { isOnline } = useOfflineSync();
-  if (isOnline) return null;
-  return (
-    <div className="sticky top-0 z-40 bg-orange-500 px-4 py-2 text-center text-xs font-medium text-white">
-      📵 Hors connexion — Tes réponses sont sauvegardées localement et seront synchronisées automatiquement.
-    </div>
-  );
-}
