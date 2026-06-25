@@ -29,6 +29,7 @@ import { Route as AuthenticatedProfesseurMissionsRouteImport } from './routes/_a
 import { Route as AuthenticatedProfesseurEtudiantsRouteImport } from './routes/_authenticated/professeur.etudiants'
 import { Route as AuthenticatedPartenaireMissionsRouteImport } from './routes/_authenticated/partenaire.missions'
 import { Route as AuthenticatedPartenaireEtudiantsRouteImport } from './routes/_authenticated/partenaire.etudiants'
+import { Route as AuthenticatedEtudiantSessionsRouteImport } from './routes/_authenticated/etudiant.sessions'
 import { Route as AuthenticatedEtudiantParcoursRouteImport } from './routes/_authenticated/etudiant.parcours'
 import { Route as AuthenticatedEtudiantNotificationsRouteImport } from './routes/_authenticated/etudiant.notifications'
 import { Route as AuthenticatedEtudiantGroupeRouteImport } from './routes/_authenticated/etudiant.groupe'
@@ -155,6 +156,12 @@ const AuthenticatedPartenaireEtudiantsRoute =
     id: '/etudiants',
     path: '/etudiants',
     getParentRoute: () => AuthenticatedPartenaireRoute,
+  } as any)
+const AuthenticatedEtudiantSessionsRoute =
+  AuthenticatedEtudiantSessionsRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => AuthenticatedEtudiantRoute,
   } as any)
 const AuthenticatedEtudiantParcoursRoute =
   AuthenticatedEtudiantParcoursRouteImport.update({
@@ -292,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
   '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
@@ -331,6 +339,7 @@ export interface FileRoutesByTo {
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
   '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
@@ -372,6 +381,7 @@ export interface FileRoutesById {
   '/_authenticated/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/_authenticated/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/_authenticated/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/_authenticated/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/_authenticated/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/_authenticated/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
   '/_authenticated/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/etudiant/groupe'
     | '/etudiant/notifications'
     | '/etudiant/parcours'
+    | '/etudiant/sessions'
     | '/partenaire/etudiants'
     | '/partenaire/missions'
     | '/professeur/etudiants'
@@ -452,6 +463,7 @@ export interface FileRouteTypes {
     | '/etudiant/groupe'
     | '/etudiant/notifications'
     | '/etudiant/parcours'
+    | '/etudiant/sessions'
     | '/partenaire/etudiants'
     | '/partenaire/missions'
     | '/professeur/etudiants'
@@ -492,6 +504,7 @@ export interface FileRouteTypes {
     | '/_authenticated/etudiant/groupe'
     | '/_authenticated/etudiant/notifications'
     | '/_authenticated/etudiant/parcours'
+    | '/_authenticated/etudiant/sessions'
     | '/_authenticated/partenaire/etudiants'
     | '/_authenticated/partenaire/missions'
     | '/_authenticated/professeur/etudiants'
@@ -653,6 +666,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/partenaire/etudiants'
       preLoaderRoute: typeof AuthenticatedPartenaireEtudiantsRouteImport
       parentRoute: typeof AuthenticatedPartenaireRoute
+    }
+    '/_authenticated/etudiant/sessions': {
+      id: '/_authenticated/etudiant/sessions'
+      path: '/sessions'
+      fullPath: '/etudiant/sessions'
+      preLoaderRoute: typeof AuthenticatedEtudiantSessionsRouteImport
+      parentRoute: typeof AuthenticatedEtudiantRoute
     }
     '/_authenticated/etudiant/parcours': {
       id: '/_authenticated/etudiant/parcours'
@@ -820,6 +840,7 @@ interface AuthenticatedEtudiantRouteChildren {
   AuthenticatedEtudiantGroupeRoute: typeof AuthenticatedEtudiantGroupeRoute
   AuthenticatedEtudiantNotificationsRoute: typeof AuthenticatedEtudiantNotificationsRoute
   AuthenticatedEtudiantParcoursRoute: typeof AuthenticatedEtudiantParcoursRoute
+  AuthenticatedEtudiantSessionsRoute: typeof AuthenticatedEtudiantSessionsRoute
 }
 
 const AuthenticatedEtudiantRouteChildren: AuthenticatedEtudiantRouteChildren = {
@@ -829,6 +850,7 @@ const AuthenticatedEtudiantRouteChildren: AuthenticatedEtudiantRouteChildren = {
   AuthenticatedEtudiantNotificationsRoute:
     AuthenticatedEtudiantNotificationsRoute,
   AuthenticatedEtudiantParcoursRoute: AuthenticatedEtudiantParcoursRoute,
+  AuthenticatedEtudiantSessionsRoute: AuthenticatedEtudiantSessionsRoute,
 }
 
 const AuthenticatedEtudiantRouteWithChildren =
