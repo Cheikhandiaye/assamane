@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_authenticated/etudiant")({
 
 function EtudiantDashboard() {
   useRoleGuard("etudiant");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { fullName, user } = useCurrentUser();
   const [etapesValidees, setEtapesValidees] = useState(0);
   const [nbBadges, setNbBadges] = useState(0);
@@ -20,6 +21,7 @@ function EtudiantDashboard() {
   const [progression, setProgression] = useState(0);
 
   useEffect(() => {
+    if (pathname !== "/etudiant") return;
     if (!user) return;
     (async () => {
       const [{ data: valides }, { count: badges }] = await Promise.all([
@@ -40,7 +42,9 @@ function EtudiantDashboard() {
         setProgression(totalEtapes ? Math.round(((valides?.length ?? 0) / totalEtapes) * 100) : 0);
       }
     })();
-  }, [user]);
+  }, [pathname, user]);
+
+  if (pathname !== "/etudiant") return <Outlet />;
 
   const prenom = fullName?.split(" ")[0] ?? "👋";
 

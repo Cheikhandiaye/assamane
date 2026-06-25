@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -12,10 +12,12 @@ export const Route = createFileRoute("/_authenticated/professeur")({
 
 function ProfDashboard() {
   useRoleGuard("professeur");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUser();
   const [stats, setStats] = useState<{ label: string; value: number; icon: typeof BookOpen }[]>([]);
 
   useEffect(() => {
+    if (pathname !== "/professeur") return;
     if (!user) return;
     (async () => {
       const { data: pp } = await supabase.from("parcours_professeurs").select("parcours_id").eq("professeur_id", user.id);
@@ -38,7 +40,9 @@ function ProfDashboard() {
         { label: "Sessions ouvertes", value: nbSessions ?? 0, icon: CalendarCheck },
       ]);
     })();
-  }, [user]);
+  }, [pathname, user]);
+
+  if (pathname !== "/professeur") return <Outlet />;
 
   return (
     <AssirikShell title="🎓 Tableau de bord Professeur">

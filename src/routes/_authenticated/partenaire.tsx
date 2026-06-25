@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -12,10 +12,12 @@ export const Route = createFileRoute("/_authenticated/partenaire")({
 
 function PartenaireDashboard() {
   useRoleGuard("partenaire");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUser();
   const [stats, setStats] = useState<{ label: string; value: number; icon: typeof Target }[]>([]);
 
   useEffect(() => {
+    if (pathname !== "/partenaire") return;
     if (!user) return;
     (async () => {
       const { data: profile } = await supabase.from("profiles").select("partenaire_id").eq("id", user.id).maybeSingle();
@@ -44,7 +46,9 @@ function PartenaireDashboard() {
         { label: "Validations en attente", value: nbVal, icon: CheckSquare },
       ]);
     })();
-  }, [user]);
+  }, [pathname, user]);
+
+  if (pathname !== "/partenaire") return <Outlet />;
 
   return (
     <AssirikShell title="🤝 Tableau de bord Partenaire">
