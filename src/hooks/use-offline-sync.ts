@@ -27,7 +27,7 @@ export function useOfflineSync() {
             etape_id: data.etapeId,
             etudiant_id: data.etudiantId,
             parcours_id: data.parcoursId,
-            contenu: data.contenu,
+            contenu: data.contenu as never,
             statut: "brouillon",
             updated_at: new Date().toISOString(),
           },
