@@ -36,7 +36,7 @@ function Page() {
 
   async function togglePresence(etudiant_id: string, present: boolean) {
     if (!presSession) return;
-    await supabase.from("presences").upsert({ session_id: presSession.id, etudiant_id, present, marquee_par: presSession.professeur_id }, { onConflict: "session_id,etudiant_id" });
+    await supabase.from("presences").upsert({ session_id: presSession.id, etudiant_id, present }, { onConflict: "session_id,etudiant_id" });
     setPresRows((p) => p.map((r) => (r.etudiant_id === etudiant_id ? { ...r, present } : r)));
   }
 
