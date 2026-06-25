@@ -25,7 +25,7 @@ function Page() {
   async function load() {
     const { data } = await supabase.from("notifications").select("titre, message, type, created_at").eq("type", "broadcast").order("created_at", { ascending: false }).limit(10);
     const seen = new Set<string>();
-    const dedup = (data ?? []).filter((n) => { const k = n.titre + n.created_at.slice(0, 16); if (seen.has(k)) return false; seen.add(k); return true; });
+    const dedup = (data ?? []).filter((n) => { const k = n.titre + (n.created_at ?? ""); if (seen.has(k)) return false; seen.add(k); return true; });
     setRecent(dedup);
   }
   useEffect(() => { load(); }, []);
@@ -83,7 +83,7 @@ function Page() {
               <li key={i} className="rounded-lg border border-border p-3">
                 <p className="font-medium">{n.titre}</p>
                 <p className="text-sm text-muted-foreground">{n.message}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString("fr-FR")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{n.created_at ? new Date(n.created_at).toLocaleString("fr-FR") : ""}</p>
               </li>
             ))}</ul>
           )}
