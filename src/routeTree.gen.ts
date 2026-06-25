@@ -26,6 +26,7 @@ import { Route as AuthenticatedEtudiantGroupeRouteImport } from './routes/_authe
 import { Route as AuthenticatedEtudiantCarnetRouteImport } from './routes/_authenticated/etudiant.carnet'
 import { Route as AuthenticatedEtudiantBadgesRouteImport } from './routes/_authenticated/etudiant.badges'
 import { Route as AuthenticatedAdminPartenairesRouteImport } from './routes/_authenticated/admin.partenaires'
+import { Route as AuthenticatedAdminParcoursRouteImport } from './routes/_authenticated/admin.parcours'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -117,6 +118,12 @@ const AuthenticatedAdminPartenairesRoute =
     path: '/partenaires',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminParcoursRoute =
+  AuthenticatedAdminParcoursRouteImport.update({
+    id: '/parcours',
+    path: '/parcours',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/admin/parcours': typeof AuthenticatedAdminParcoursRoute
   '/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
   '/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
@@ -147,6 +155,7 @@ export interface FileRoutesByTo {
   '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/admin/parcours': typeof AuthenticatedAdminParcoursRoute
   '/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
   '/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
@@ -167,6 +176,7 @@ export interface FileRoutesById {
   '/_authenticated/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/_authenticated/admin/parcours': typeof AuthenticatedAdminParcoursRoute
   '/_authenticated/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
   '/_authenticated/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/_authenticated/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/professeur'
     | '/profil'
     | '/auth/reset-password'
+    | '/admin/parcours'
     | '/admin/partenaires'
     | '/etudiant/badges'
     | '/etudiant/carnet'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/professeur'
     | '/profil'
     | '/auth/reset-password'
+    | '/admin/parcours'
     | '/admin/partenaires'
     | '/etudiant/badges'
     | '/etudiant/carnet'
@@ -224,6 +236,7 @@ export interface FileRouteTypes {
     | '/_authenticated/professeur'
     | '/_authenticated/profil'
     | '/auth/reset-password'
+    | '/_authenticated/admin/parcours'
     | '/_authenticated/admin/partenaires'
     | '/_authenticated/etudiant/badges'
     | '/_authenticated/etudiant/carnet'
@@ -360,14 +373,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPartenairesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/parcours': {
+      id: '/_authenticated/admin/parcours'
+      path: '/parcours'
+      fullPath: '/admin/parcours'
+      preLoaderRoute: typeof AuthenticatedAdminParcoursRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminParcoursRoute: typeof AuthenticatedAdminParcoursRoute
   AuthenticatedAdminPartenairesRoute: typeof AuthenticatedAdminPartenairesRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminParcoursRoute: AuthenticatedAdminParcoursRoute,
   AuthenticatedAdminPartenairesRoute: AuthenticatedAdminPartenairesRoute,
 }
 
