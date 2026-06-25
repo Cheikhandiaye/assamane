@@ -94,9 +94,12 @@ function CarnetPage() {
     if (existing) {
       result = await supabase.from("reponses_etudiant").update(payload).eq("id", existing.id).select().single();
     } else {
-      // Récupère parcours via module
-      const { data: mod } = await supabase.from("modules_cours").select("parcours_id").eq("id", etape.id.length ? (await getModuleId(etape.id)) : "").maybeSingle();
-      const pid = parcoursId ?? mod?.parcours_id ?? null;
+      const moduleId = await getModuleId(etape.id);
+      let pid = parcoursId;
+      if (!pid && moduleId) {
+        const { data: mod } = await supabase.from("modules_cours").select("parcours_id").eq("id", moduleId).maybeSingle();
+        pid = mod?.parcours_id ?? null;
+      }
       result = await supabase.from("reponses_etudiant").insert({ ...payload, etape_id: etape.id, etudiant_id: user.id, parcours_id: pid }).select().single();
     }
     setSaving(null);
