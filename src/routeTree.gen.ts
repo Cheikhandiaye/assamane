@@ -47,6 +47,7 @@ import { Route as AuthenticatedAdminGroupesRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminEtudiantsRouteImport } from './routes/_authenticated/admin.etudiants'
 import { Route as AuthenticatedAdminCahierDeTexteRouteImport } from './routes/_authenticated/admin.cahier-de-texte'
 import { Route as AuthenticatedAdminBibliothequeRouteImport } from './routes/_authenticated/admin.bibliotheque'
+import { Route as AuthenticatedAdminBadgesRouteImport } from './routes/_authenticated/admin.badges'
 import { Route as AuthenticatedProfesseurParcoursParcoursIdRouteImport } from './routes/_authenticated/professeur.parcours.$parcoursId'
 import { Route as AuthenticatedProfesseurCarnetEtudiantIdParcoursIdRouteImport } from './routes/_authenticated/professeur.carnet.$etudiantId.$parcoursId'
 
@@ -266,6 +267,12 @@ const AuthenticatedAdminBibliothequeRoute =
     path: '/bibliotheque',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminBadgesRoute =
+  AuthenticatedAdminBadgesRouteImport.update({
+    id: '/badges',
+    path: '/badges',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedProfesseurParcoursParcoursIdRoute =
   AuthenticatedProfesseurParcoursParcoursIdRouteImport.update({
     id: '/$parcoursId',
@@ -290,6 +297,7 @@ export interface FileRoutesByFullPath {
   '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/admin/badges': typeof AuthenticatedAdminBadgesRoute
   '/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
@@ -331,6 +339,7 @@ export interface FileRoutesByTo {
   '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/admin/badges': typeof AuthenticatedAdminBadgesRoute
   '/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
@@ -374,6 +383,7 @@ export interface FileRoutesById {
   '/_authenticated/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/_authenticated/admin/badges': typeof AuthenticatedAdminBadgesRoute
   '/_authenticated/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/_authenticated/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/_authenticated/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/professeur'
     | '/profil'
     | '/auth/reset-password'
+    | '/admin/badges'
     | '/admin/bibliotheque'
     | '/admin/cahier-de-texte'
     | '/admin/etudiants'
@@ -458,6 +469,7 @@ export interface FileRouteTypes {
     | '/professeur'
     | '/profil'
     | '/auth/reset-password'
+    | '/admin/badges'
     | '/admin/bibliotheque'
     | '/admin/cahier-de-texte'
     | '/admin/etudiants'
@@ -500,6 +512,7 @@ export interface FileRouteTypes {
     | '/_authenticated/professeur'
     | '/_authenticated/profil'
     | '/auth/reset-password'
+    | '/_authenticated/admin/badges'
     | '/_authenticated/admin/bibliotheque'
     | '/_authenticated/admin/cahier-de-texte'
     | '/_authenticated/admin/etudiants'
@@ -806,6 +819,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBibliothequeRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/badges': {
+      id: '/_authenticated/admin/badges'
+      path: '/badges'
+      fullPath: '/admin/badges'
+      preLoaderRoute: typeof AuthenticatedAdminBadgesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/professeur/parcours/$parcoursId': {
       id: '/_authenticated/professeur/parcours/$parcoursId'
       path: '/$parcoursId'
@@ -824,6 +844,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminBadgesRoute: typeof AuthenticatedAdminBadgesRoute
   AuthenticatedAdminBibliothequeRoute: typeof AuthenticatedAdminBibliothequeRoute
   AuthenticatedAdminCahierDeTexteRoute: typeof AuthenticatedAdminCahierDeTexteRoute
   AuthenticatedAdminEtudiantsRoute: typeof AuthenticatedAdminEtudiantsRoute
@@ -839,6 +860,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminBadgesRoute: AuthenticatedAdminBadgesRoute,
   AuthenticatedAdminBibliothequeRoute: AuthenticatedAdminBibliothequeRoute,
   AuthenticatedAdminCahierDeTexteRoute: AuthenticatedAdminCahierDeTexteRoute,
   AuthenticatedAdminEtudiantsRoute: AuthenticatedAdminEtudiantsRoute,
