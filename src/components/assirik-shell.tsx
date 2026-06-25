@@ -128,8 +128,12 @@ export function AssirikShell({ title, children }: { title: string; children: Rea
   const SidebarContent = (
     <>
       <Link to="/" className="flex items-center gap-2 px-1">
-        <Rocket size={24} style={{ color: "#7C3AED" }} />
-        <span className="font-bold text-xl text-white">ASSIRIK</span>
+        {brand?.logo_url ? (
+          <img src={brand.logo_url} alt={brand.nom} className="h-7 w-auto" />
+        ) : (
+          <Rocket size={24} style={{ color: "var(--brand-primary, #7C3AED)" }} />
+        )}
+        <span className="font-bold text-xl text-white truncate">{brand?.nom ?? "ASSIRIK"}</span>
       </Link>
       <nav className="mt-4 flex flex-col gap-1 overflow-y-auto">
         {items.map((item) => {
