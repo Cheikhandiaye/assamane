@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Pencil, Trash2, BookOpen, Search, Target } from "lucide-react";
 import { ParcoursFormDialog, type Parcours, type MissionOption } from "@/components/parcours-form";
 import {
+import { useRoleGuard } from "@/hooks/use-role-guard";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -27,6 +28,7 @@ interface ParcoursRow extends Parcours {
 }
 
 function AdminParcoursPage() {
+  useRoleGuard("admin");
   const [items, setItems] = useState<ParcoursRow[]>([]);
   const [missions, setMissions] = useState<MissionOption[]>([]);
   const [loading, setLoading] = useState(true);

@@ -4,6 +4,7 @@ import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { Users } from "lucide-react";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 export const Route = createFileRoute("/_authenticated/etudiant/groupe")({
   component: GroupePage,
@@ -17,6 +18,7 @@ interface GroupeRow {
 }
 
 function GroupePage() {
+  useRoleGuard("etudiant");
   const { user } = useCurrentUser();
   const [groupes, setGroupes] = useState<GroupeRow[]>([]);
 

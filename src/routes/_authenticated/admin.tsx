@@ -4,6 +4,7 @@ import { AssirikShell } from "@/components/assirik-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Building2, Target, BookOpen, Users, CheckSquare, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminDashboard,
@@ -17,6 +18,7 @@ interface Stat {
 }
 
 function AdminDashboard() {
+  useRoleGuard("admin");
   const [stats, setStats] = useState<Stat[]>([]);
 
   useEffect(() => {

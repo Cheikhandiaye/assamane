@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 export const Route = createFileRoute("/_authenticated/etudiant/badges")({
   component: BadgesPage,
@@ -18,6 +19,7 @@ interface Badge {
 }
 
 function BadgesPage() {
+  useRoleGuard("etudiant");
   const { user } = useCurrentUser();
   const [obtenus, setObtenus] = useState<Badge[]>([]);
   const [verrouilles, setVerrouilles] = useState<Badge[]>([]);

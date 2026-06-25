@@ -4,12 +4,14 @@ import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { Target, Users, CheckSquare } from "lucide-react";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 export const Route = createFileRoute("/_authenticated/partenaire")({
   component: PartenaireDashboard,
 });
 
 function PartenaireDashboard() {
+  useRoleGuard("partenaire");
   const { user } = useCurrentUser();
   const [stats, setStats] = useState<{ label: string; value: number; icon: typeof Target }[]>([]);
 

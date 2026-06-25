@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Building2, Mail, MapPin, Search } from "lucide-react";
 import type { Partenaire } from "@/components/partenaire-form";
 import { toast } from "sonner";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 export const Route = createFileRoute("/_authenticated/professeur/partenaires")({
   component: ProfesseurPartenairesPage,
 });
 
 function ProfesseurPartenairesPage() {
+  useRoleGuard("professeur");
   const [items, setItems] = useState<Partenaire[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");

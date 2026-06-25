@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Pencil, Trash2, Building2, Mail, MapPin, Search } from "lucide-react";
 import { PartenaireFormDialog, type Partenaire } from "@/components/partenaire-form";
 import {
+import { useRoleGuard } from "@/hooks/use-role-guard";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/admin/partenaires")({
 });
 
 function AdminPartenairesPage() {
+  useRoleGuard("admin");
   const [items, setItems] = useState<Partenaire[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
