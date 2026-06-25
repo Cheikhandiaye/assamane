@@ -20,6 +20,7 @@ import { Route as AuthenticatedPartenaireRouteImport } from './routes/_authentic
 import { Route as AuthenticatedEtudiantRouteImport } from './routes/_authenticated/etudiant'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedProfesseurPartenairesRouteImport } from './routes/_authenticated/professeur.partenaires'
 import { Route as AuthenticatedEtudiantParcoursRouteImport } from './routes/_authenticated/etudiant.parcours'
 import { Route as AuthenticatedEtudiantGroupeRouteImport } from './routes/_authenticated/etudiant.groupe'
 import { Route as AuthenticatedEtudiantCarnetRouteImport } from './routes/_authenticated/etudiant.carnet'
@@ -80,6 +81,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfesseurPartenairesRoute =
+  AuthenticatedProfesseurPartenairesRouteImport.update({
+    id: '/partenaires',
+    path: '/partenaires',
+    getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
 const AuthenticatedEtudiantParcoursRoute =
   AuthenticatedEtudiantParcoursRouteImport.update({
     id: '/parcours',
@@ -119,7 +126,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRoute
   '/etudiant': typeof AuthenticatedEtudiantRouteWithChildren
   '/partenaire': typeof AuthenticatedPartenaireRoute
-  '/professeur': typeof AuthenticatedProfesseurRoute
+  '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -136,7 +144,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppRoute
   '/etudiant': typeof AuthenticatedEtudiantRouteWithChildren
   '/partenaire': typeof AuthenticatedPartenaireRoute
-  '/professeur': typeof AuthenticatedProfesseurRoute
+  '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -155,7 +164,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/etudiant': typeof AuthenticatedEtudiantRouteWithChildren
   '/_authenticated/partenaire': typeof AuthenticatedPartenaireRoute
-  '/_authenticated/professeur': typeof AuthenticatedProfesseurRoute
+  '/_authenticated/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/_authenticated/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
@@ -163,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/_authenticated/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/_authenticated/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/_authenticated/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/etudiant/carnet'
     | '/etudiant/groupe'
     | '/etudiant/parcours'
+    | '/professeur/partenaires'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/etudiant/carnet'
     | '/etudiant/groupe'
     | '/etudiant/parcours'
+    | '/professeur/partenaires'
   id:
     | '__root__'
     | '/'
@@ -217,6 +229,7 @@ export interface FileRouteTypes {
     | '/_authenticated/etudiant/carnet'
     | '/_authenticated/etudiant/groupe'
     | '/_authenticated/etudiant/parcours'
+    | '/_authenticated/professeur/partenaires'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/professeur/partenaires': {
+      id: '/_authenticated/professeur/partenaires'
+      path: '/partenaires'
+      fullPath: '/professeur/partenaires'
+      preLoaderRoute: typeof AuthenticatedProfesseurPartenairesRouteImport
+      parentRoute: typeof AuthenticatedProfesseurRoute
+    }
     '/_authenticated/etudiant/parcours': {
       id: '/_authenticated/etudiant/parcours'
       path: '/parcours'
@@ -373,12 +393,27 @@ const AuthenticatedEtudiantRouteWithChildren =
     AuthenticatedEtudiantRouteChildren,
   )
 
+interface AuthenticatedProfesseurRouteChildren {
+  AuthenticatedProfesseurPartenairesRoute: typeof AuthenticatedProfesseurPartenairesRoute
+}
+
+const AuthenticatedProfesseurRouteChildren: AuthenticatedProfesseurRouteChildren =
+  {
+    AuthenticatedProfesseurPartenairesRoute:
+      AuthenticatedProfesseurPartenairesRoute,
+  }
+
+const AuthenticatedProfesseurRouteWithChildren =
+  AuthenticatedProfesseurRoute._addFileChildren(
+    AuthenticatedProfesseurRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedEtudiantRoute: typeof AuthenticatedEtudiantRouteWithChildren
   AuthenticatedPartenaireRoute: typeof AuthenticatedPartenaireRoute
-  AuthenticatedProfesseurRoute: typeof AuthenticatedProfesseurRoute
+  AuthenticatedProfesseurRoute: typeof AuthenticatedProfesseurRouteWithChildren
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
 }
 
@@ -387,7 +422,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedEtudiantRoute: AuthenticatedEtudiantRouteWithChildren,
   AuthenticatedPartenaireRoute: AuthenticatedPartenaireRoute,
-  AuthenticatedProfesseurRoute: AuthenticatedProfesseurRoute,
+  AuthenticatedProfesseurRoute: AuthenticatedProfesseurRouteWithChildren,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
 }
 
