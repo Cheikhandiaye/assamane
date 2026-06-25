@@ -23,10 +23,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useEffect, useState as useStateAlias } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, type AppRole } from "@/hooks/use-current-user";
 import { NotificationBell } from "@/components/notification-panel";
-import { ConnectionIndicator, OfflineBanner } from "@/components/connection-indicator";
+import { ConnectionIndicator } from "@/components/connection-indicator";
+import { OfflineBanner } from "@/components/offline-banner";
+import { applyBrand } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABEL: Record<AppRole, string> = {
