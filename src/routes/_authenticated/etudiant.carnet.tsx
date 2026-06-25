@@ -9,7 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, NotebookPen, CheckCircle2, Lock, Send, Save } from "lucide-react";
+import { Loader2, NotebookPen, CheckCircle2, Lock, Send, Save, FileDown } from "lucide-react";
+import { useRef } from "react";
+import { exportElementToPDF } from "@/lib/exports";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/etudiant/carnet")({
@@ -24,6 +26,7 @@ interface Reponse { id: string; contenu: Record<string, string>; statut: string;
 function CarnetPage() {
   useRoleGuard("etudiant");
   const { user } = useCurrentUser();
+  const carnetRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState<ModuleAcces[]>([]);
   const [reponses, setReponses] = useState<Record<string, Reponse>>({});
@@ -129,7 +132,13 @@ function CarnetPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-[280px_1fr]">
+        <>
+        <div className="mb-3 flex justify-end">
+          <Button size="sm" variant="outline" onClick={async () => { if (carnetRef.current) await exportElementToPDF(carnetRef.current, `carnet-${new Date().toISOString().slice(0,10)}`); }}>
+            <FileDown size={14} className="mr-1" />Exporter PDF
+          </Button>
+        </div>
+        <div id="carnet-content" ref={carnetRef} className="grid gap-6 md:grid-cols-[280px_1fr]">
           <aside className="space-y-2">
             {modules.map((m) => (
               <button
@@ -216,6 +225,7 @@ function CarnetPage() {
             })}
           </div>
         </div>
+        </>
       )}
     </AssirikShell>
   );
