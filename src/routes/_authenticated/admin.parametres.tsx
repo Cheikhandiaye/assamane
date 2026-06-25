@@ -26,7 +26,7 @@ function Page() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("app_settings").select("value").eq("key", "platform").maybeSingle();
-      if (data?.value && typeof data.value === "object") setForm({ ...DEFAULT, ...(data.value as Settings) });
+      if (data?.value && typeof data.value === "object") setForm({ ...DEFAULT, ...(data.value as unknown as Settings) });
       setLoading(false);
     })();
   }, []);
