@@ -41,11 +41,8 @@ function Page() {
   }
 
   async function cloturer(id: string) {
-    const { error } = await supabase.rpc("fn_session_cloture", { _session_id: id } as never);
-    if (error) {
-      const { error: e2 } = await supabase.from("sessions_cours").update({ statut: "terminee", terminee_le: new Date().toISOString() }).eq("id", id);
-      if (e2) return toast.error(e2.message);
-    }
+    const { error } = await supabase.from("sessions_cours").update({ statut: "terminee", terminee_le: new Date().toISOString() }).eq("id", id);
+    if (error) return toast.error(error.message);
     toast.success("Session clôturée"); load();
   }
 
