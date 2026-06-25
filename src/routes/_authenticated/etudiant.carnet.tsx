@@ -252,7 +252,7 @@ function CarnetPage() {
                           <Textarea
                             value={getValue(etape, ch.key)}
                             onChange={(e) => setDraft(etape.id, ch.key, e.target.value)}
-                            disabled={locked}
+                            disabled={locked || (etape.type === "groupe" && !isRapporteur)}
                             rows={4}
                           />
                         ) : (
@@ -260,7 +260,7 @@ function CarnetPage() {
                             type={ch.type}
                             value={getValue(etape, ch.key)}
                             onChange={(e) => setDraft(etape.id, ch.key, e.target.value)}
-                            disabled={locked}
+                            disabled={locked || (etape.type === "groupe" && !isRapporteur)}
                           />
                         )}
                       </div>
@@ -277,20 +277,20 @@ function CarnetPage() {
                       </Button>
                     </div>
                   )}
-                  {!locked && etape.type === "groupe" && inGroupe && (
+                  {!locked && etape.type === "groupe" && inGroupe && isRapporteur && (
                     <div className="mt-4 flex flex-wrap gap-2">
                       <Button variant="outline" onClick={() => save(etape, current?.parcours_id ?? null, false)} disabled={saving === etape.id}>
                         <Save size={16} className="mr-2" /> Brouillon groupe
                       </Button>
-                      <Button onClick={() => save(etape, current?.parcours_id ?? null, true)} disabled={saving === etape.id || !isRapporteur} title={isRapporteur ? "" : "Seul le rapporteur peut soumettre"}>
+                      <Button onClick={() => save(etape, current?.parcours_id ?? null, true)} disabled={saving === etape.id}>
                         <Send size={16} className="mr-2" /> Soumettre (rapporteur)
                       </Button>
-                      {!isRapporteur && (
-                        <p className="w-full text-xs text-muted-foreground">
-                          💡 Tous les membres peuvent éditer le brouillon ; seul le rapporteur peut soumettre.
-                        </p>
-                      )}
                     </div>
+                  )}
+                  {!locked && etape.type === "groupe" && inGroupe && !isRapporteur && (
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      👀 Lecture seule : seul le rapporteur du groupe peut éditer et soumettre cette étape.
+                    </p>
                   )}
                   {etape.type === "groupe" && !inGroupe && (
                     <p className="mt-4 text-xs text-muted-foreground">
