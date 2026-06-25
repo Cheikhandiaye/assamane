@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,10 @@ interface Stat {
 
 function AdminDashboard() {
   useRoleGuard("admin");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [stats, setStats] = useState<Stat[]>([]);
+
+  if (pathname !== "/admin") return <Outlet />;
 
   useEffect(() => {
     (async () => {

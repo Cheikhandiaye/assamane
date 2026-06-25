@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -13,11 +13,14 @@ export const Route = createFileRoute("/_authenticated/etudiant")({
 
 function EtudiantDashboard() {
   useRoleGuard("etudiant");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { fullName, user } = useCurrentUser();
   const [etapesValidees, setEtapesValidees] = useState(0);
   const [nbBadges, setNbBadges] = useState(0);
   const [moyenne, setMoyenne] = useState<number | null>(null);
   const [progression, setProgression] = useState(0);
+
+  if (pathname !== "/etudiant") return <Outlet />;
 
   useEffect(() => {
     if (!user) return;
