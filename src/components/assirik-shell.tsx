@@ -22,11 +22,13 @@ import {
   Trophy,
   type LucideIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, type AppRole } from "@/hooks/use-current-user";
 import { NotificationBell } from "@/components/notification-panel";
-import { ConnectionIndicator, OfflineBanner } from "@/components/connection-indicator";
+import { ConnectionIndicator } from "@/components/connection-indicator";
+import { OfflineBanner } from "@/components/offline-banner";
+import { applyBrand } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABEL: Record<AppRole, string> = {
@@ -86,6 +88,29 @@ export function AssirikShell({ title, children }: { title: string; children: Rea
   const { fullName, role, user } = useCurrentUser();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [brand, setBrand] = useState<{ nom: string; logo_url: string | null } | null>(null);
+
+  useEffect(() => {
+    if (role !== "partenaire" || !user) {
+      applyBrand(null);
+      setBrand(null);
+      return;
+    }
+    (async () => {
+      const { data: prof } = await supabase.from("profiles").select("partenaire_id").eq("id", user.id).maybeSingle();
+      if (!prof?.partenaire_id) return;
+      const { data: p } = await supabase
+        .from("partenaires")
+        .select("nom, logo_url, couleur_primaire, couleur_secondaire")
+        .eq("id", prof.partenaire_id)
+        .maybeSingle();
+      if (p) {
+        applyBrand({ couleur_primaire: p.couleur_primaire, couleur_secondaire: p.couleur_secondaire });
+        setBrand({ nom: p.nom, logo_url: p.logo_url });
+      }
+    })();
+    return () => applyBrand(null);
+  }, [role, user?.id]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -103,8 +128,12 @@ export function AssirikShell({ title, children }: { title: string; children: Rea
   const SidebarContent = (
     <>
       <Link to="/" className="flex items-center gap-2 px-1">
-        <Rocket size={24} style={{ color: "#7C3AED" }} />
-        <span className="font-bold text-xl text-white">ASSIRIK</span>
+        {brand?.logo_url ? (
+          <img src={brand.logo_url} alt={brand.nom} className="h-7 w-auto" />
+        ) : (
+          <Rocket size={24} style={{ color: "var(--brand-primary, #7C3AED)" }} />
+        )}
+        <span className="font-bold text-xl text-white truncate">{brand?.nom ?? "ASSIRIK"}</span>
       </Link>
       <nav className="mt-4 flex flex-col gap-1 overflow-y-auto">
         {items.map((item) => {

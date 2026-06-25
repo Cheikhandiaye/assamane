@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import Papa from "papaparse";
+import html2canvas from "html2canvas";
 
 export function exportCSV(filename: string, rows: Record<string, unknown>[]) {
   const csv = Papa.unparse(rows);
@@ -81,4 +82,26 @@ export function exportPDF(filename: string, title: string, sections: PdfSection[
   }
 
   doc.save(filename.endsWith(".pdf") ? filename : `${filename}.pdf`);
+}
+
+/** Capture une div HTML et l'exporte en PDF A4. */
+export async function exportElementToPDF(element: HTMLElement, filename: string) {
+  const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF({ unit: "pt", format: "a4" });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const ratio = canvas.width / pageWidth;
+  const imgHeight = canvas.height / ratio;
+  let heightLeft = imgHeight;
+  let position = 0;
+  pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+  heightLeft -= pageHeight;
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+    heightLeft -= pageHeight;
+  }
+  pdf.save(filename.endsWith(".pdf") ? filename : `${filename}.pdf`);
 }

@@ -51,7 +51,13 @@ function Page() {
               <p className="mt-2 text-sm"><strong>Réalisé :</strong> {r.realise ?? "—"}</p>
             </div>
           ))}
-          {!rows.length && <p className="text-muted-foreground">Aucun cahier signé pour le moment.</p>}
+          {!rows.length && (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
+              <p className="font-semibold">Aucune entrée pour le moment</p>
+              <p className="mt-1 text-sm text-muted-foreground">Crée d'abord une session pour qu'un professeur puisse y signer son cahier.</p>
+              <Button asChild className="mt-4" variant="outline"><a href="/admin/sessions">Aller aux sessions</a></Button>
+            </div>
+          )}
         </div>
       )}
     </AssirikShell>

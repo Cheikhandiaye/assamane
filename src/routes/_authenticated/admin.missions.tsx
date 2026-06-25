@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Target, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Target, Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/missions")({ component: MissionsPage });
@@ -55,6 +55,27 @@ function MissionsPage() {
     toast.success("Mission supprimée"); load();
   }
 
+  async function duplicate(m: Mission, withParcours: boolean) {
+    const { data: nm, error } = await supabase.from("missions").insert({
+      nom: `${m.nom} (copie)`,
+      description: m.description,
+      partenaire_id: m.partenaire_id,
+      date_debut: m.date_debut,
+      date_fin: m.date_fin,
+      statut: "brouillon",
+      dupliquee_depuis: m.id,
+    }).select("id").single();
+    if (error || !nm) return toast.error(error?.message ?? "Erreur");
+    if (withParcours) {
+      const { data: pcs } = await supabase.from("parcours").select("*").eq("mission_id", m.id);
+      if (pcs?.length) {
+        const rows = pcs.map(({ id: _id, created_at: _c, ...rest }) => ({ ...rest, mission_id: nm.id }));
+        await supabase.from("parcours").insert(rows as never);
+      }
+    }
+    toast.success("Mission dupliquée"); load();
+  }
+
   return (
     <AssirikShell title="🎯 Missions">
       <div className="mb-4 flex justify-end">
@@ -73,6 +94,17 @@ function MissionsPage() {
               <p className="mt-2 text-xs text-muted-foreground">{m.date_debut} → {m.date_fin}</p>
               <div className="mt-4 flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => openEdit(m)}><Pencil size={14} className="mr-1" />Modifier</Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild><Button variant="ghost" size="sm" title="Dupliquer"><Copy size={14} /></Button></AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Dupliquer cette mission ?</AlertDialogTitle><AlertDialogDescription>Une copie sera créée en brouillon. Copier aussi les parcours liés ?</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => duplicate(m, false)}>Sans parcours</AlertDialogAction>
+                      <AlertDialogAction onClick={() => duplicate(m, true)}>Avec parcours</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <AlertDialog>
                   <AlertDialogTrigger asChild><Button variant="ghost" size="sm" className="text-destructive"><Trash2 size={14} /></Button></AlertDialogTrigger>
                   <AlertDialogContent>
