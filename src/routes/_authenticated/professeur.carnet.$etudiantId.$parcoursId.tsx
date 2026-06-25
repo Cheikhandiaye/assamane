@@ -97,7 +97,7 @@ function Page() {
     };
     if (statut === "valide") payload.note = parseFloat(form.note);
     if (rep) {
-      const { error } = await supabase.from(table).update(payload).eq("id", rep.id);
+      const { error } = await supabase.from(table).update(payload as never).eq("id", rep.id);
       if (error) return toast.error(error.message);
     } else if (statut === "valide" && form.letat) {
       const insert = { ...payload, etape_id: dialog.etape.id, parcours_id: parcoursId, contenu: {}, etudiant_id: etudiantId };
