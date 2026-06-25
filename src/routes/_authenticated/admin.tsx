@@ -22,9 +22,8 @@ function AdminDashboard() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [stats, setStats] = useState<Stat[]>([]);
 
-  if (pathname !== "/admin") return <Outlet />;
-
   useEffect(() => {
+    if (pathname !== "/admin") return;
     (async () => {
       const tables = [
         ["partenaires", "Partenaires", Building2, undefined],
@@ -45,7 +44,9 @@ function AdminDashboard() {
         { label: "Prolongations", value: pendingProlongations ?? 0, icon: Clock, accent: "bg-destructive" },
       ]);
     })();
-  }, []);
+  }, [pathname]);
+
+  if (pathname !== "/admin") return <Outlet />;
 
   return (
     <AssirikShell title="🛡️ Tableau de bord Admin">

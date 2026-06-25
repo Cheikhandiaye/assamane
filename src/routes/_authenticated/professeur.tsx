@@ -16,9 +16,8 @@ function ProfDashboard() {
   const { user } = useCurrentUser();
   const [stats, setStats] = useState<{ label: string; value: number; icon: typeof BookOpen }[]>([]);
 
-  if (pathname !== "/professeur") return <Outlet />;
-
   useEffect(() => {
+    if (pathname !== "/professeur") return;
     if (!user) return;
     (async () => {
       const { data: pp } = await supabase.from("parcours_professeurs").select("parcours_id").eq("professeur_id", user.id);
@@ -41,7 +40,9 @@ function ProfDashboard() {
         { label: "Sessions ouvertes", value: nbSessions ?? 0, icon: CalendarCheck },
       ]);
     })();
-  }, [user]);
+  }, [pathname, user]);
+
+  if (pathname !== "/professeur") return <Outlet />;
 
   return (
     <AssirikShell title="🎓 Tableau de bord Professeur">

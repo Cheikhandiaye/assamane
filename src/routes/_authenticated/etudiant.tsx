@@ -20,9 +20,8 @@ function EtudiantDashboard() {
   const [moyenne, setMoyenne] = useState<number | null>(null);
   const [progression, setProgression] = useState(0);
 
-  if (pathname !== "/etudiant") return <Outlet />;
-
   useEffect(() => {
+    if (pathname !== "/etudiant") return;
     if (!user) return;
     (async () => {
       const [{ data: valides }, { count: badges }] = await Promise.all([
@@ -43,7 +42,9 @@ function EtudiantDashboard() {
         setProgression(totalEtapes ? Math.round(((valides?.length ?? 0) / totalEtapes) * 100) : 0);
       }
     })();
-  }, [user]);
+  }, [pathname, user]);
+
+  if (pathname !== "/etudiant") return <Outlet />;
 
   const prenom = fullName?.split(" ")[0] ?? "👋";
 
