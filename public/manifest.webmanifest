@@ -1,0 +1,13 @@
+{
+  "name": "ASSIRIK",
+  "short_name": "ASSIRIK",
+  "description": "Plateforme pédagogique entrepreneuriat",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1E1B4B",
+  "theme_color": "#7C3AED",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
