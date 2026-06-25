@@ -85,10 +85,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "ASSIRIK" },
-      { property: "og:title", content: "ASSIRIK" },
-      { property: "og:description", content: "Plateforme pédagogique entrepreneuriat" },
+      { property: "og:title", content: "ASSIRIK — Plateforme pédagogique entrepreneuriat" },
+      { property: "og:description", content: "ASSIRIK : la plateforme pédagogique pour apprendre l'entrepreneuriat avec rigueur et passion." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "ASSIRIK — Plateforme pédagogique entrepreneuriat" },
+      { name: "twitter:description", content: "ASSIRIK : la plateforme pédagogique pour apprendre l'entrepreneuriat avec rigueur et passion." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c79668da-cfc4-4a66-b691-42d5eaccb3c7" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c79668da-cfc4-4a66-b691-42d5eaccb3c7" },
     ],
     links: [
       {
