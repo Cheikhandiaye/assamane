@@ -20,7 +20,15 @@ import { Route as AuthenticatedPartenaireRouteImport } from './routes/_authentic
 import { Route as AuthenticatedEtudiantRouteImport } from './routes/_authenticated/etudiant'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedProfesseurValidationsRouteImport } from './routes/_authenticated/professeur.validations'
+import { Route as AuthenticatedProfesseurProlongationsRouteImport } from './routes/_authenticated/professeur.prolongations'
 import { Route as AuthenticatedProfesseurPartenairesRouteImport } from './routes/_authenticated/professeur.partenaires'
+import { Route as AuthenticatedProfesseurParcoursRouteImport } from './routes/_authenticated/professeur.parcours'
+import { Route as AuthenticatedProfesseurModulesRouteImport } from './routes/_authenticated/professeur.modules'
+import { Route as AuthenticatedProfesseurMissionsRouteImport } from './routes/_authenticated/professeur.missions'
+import { Route as AuthenticatedProfesseurEtudiantsRouteImport } from './routes/_authenticated/professeur.etudiants'
+import { Route as AuthenticatedPartenaireMissionsRouteImport } from './routes/_authenticated/partenaire.missions'
+import { Route as AuthenticatedPartenaireEtudiantsRouteImport } from './routes/_authenticated/partenaire.etudiants'
 import { Route as AuthenticatedEtudiantParcoursRouteImport } from './routes/_authenticated/etudiant.parcours'
 import { Route as AuthenticatedEtudiantGroupeRouteImport } from './routes/_authenticated/etudiant.groupe'
 import { Route as AuthenticatedEtudiantCarnetRouteImport } from './routes/_authenticated/etudiant.carnet'
@@ -91,11 +99,59 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfesseurValidationsRoute =
+  AuthenticatedProfesseurValidationsRouteImport.update({
+    id: '/validations',
+    path: '/validations',
+    getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
+const AuthenticatedProfesseurProlongationsRoute =
+  AuthenticatedProfesseurProlongationsRouteImport.update({
+    id: '/prolongations',
+    path: '/prolongations',
+    getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
 const AuthenticatedProfesseurPartenairesRoute =
   AuthenticatedProfesseurPartenairesRouteImport.update({
     id: '/partenaires',
     path: '/partenaires',
     getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
+const AuthenticatedProfesseurParcoursRoute =
+  AuthenticatedProfesseurParcoursRouteImport.update({
+    id: '/parcours',
+    path: '/parcours',
+    getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
+const AuthenticatedProfesseurModulesRoute =
+  AuthenticatedProfesseurModulesRouteImport.update({
+    id: '/modules',
+    path: '/modules',
+    getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
+const AuthenticatedProfesseurMissionsRoute =
+  AuthenticatedProfesseurMissionsRouteImport.update({
+    id: '/missions',
+    path: '/missions',
+    getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
+const AuthenticatedProfesseurEtudiantsRoute =
+  AuthenticatedProfesseurEtudiantsRouteImport.update({
+    id: '/etudiants',
+    path: '/etudiants',
+    getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
+const AuthenticatedPartenaireMissionsRoute =
+  AuthenticatedPartenaireMissionsRouteImport.update({
+    id: '/missions',
+    path: '/missions',
+    getParentRoute: () => AuthenticatedPartenaireRoute,
+  } as any)
+const AuthenticatedPartenaireEtudiantsRoute =
+  AuthenticatedPartenaireEtudiantsRouteImport.update({
+    id: '/etudiants',
+    path: '/etudiants',
+    getParentRoute: () => AuthenticatedPartenaireRoute,
   } as any)
 const AuthenticatedEtudiantParcoursRoute =
   AuthenticatedEtudiantParcoursRouteImport.update({
@@ -195,7 +251,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRoute
   '/etudiant': typeof AuthenticatedEtudiantRouteWithChildren
-  '/partenaire': typeof AuthenticatedPartenaireRoute
+  '/partenaire': typeof AuthenticatedPartenaireRouteWithChildren
   '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -214,7 +270,15 @@ export interface FileRoutesByFullPath {
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
+  '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
+  '/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
+  '/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
+  '/professeur/parcours': typeof AuthenticatedProfesseurParcoursRoute
   '/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
+  '/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
+  '/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -223,7 +287,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRoute
   '/etudiant': typeof AuthenticatedEtudiantRouteWithChildren
-  '/partenaire': typeof AuthenticatedPartenaireRoute
+  '/partenaire': typeof AuthenticatedPartenaireRouteWithChildren
   '/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -242,7 +306,15 @@ export interface FileRoutesByTo {
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
+  '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
+  '/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
+  '/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
+  '/professeur/parcours': typeof AuthenticatedProfesseurParcoursRoute
   '/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
+  '/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
+  '/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -253,7 +325,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/etudiant': typeof AuthenticatedEtudiantRouteWithChildren
-  '/_authenticated/partenaire': typeof AuthenticatedPartenaireRoute
+  '/_authenticated/partenaire': typeof AuthenticatedPartenaireRouteWithChildren
   '/_authenticated/professeur': typeof AuthenticatedProfesseurRouteWithChildren
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -272,7 +344,15 @@ export interface FileRoutesById {
   '/_authenticated/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/_authenticated/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
   '/_authenticated/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
+  '/_authenticated/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
+  '/_authenticated/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/_authenticated/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
+  '/_authenticated/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
+  '/_authenticated/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
+  '/_authenticated/professeur/parcours': typeof AuthenticatedProfesseurParcoursRoute
   '/_authenticated/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
+  '/_authenticated/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
+  '/_authenticated/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -302,7 +382,15 @@ export interface FileRouteTypes {
     | '/etudiant/carnet'
     | '/etudiant/groupe'
     | '/etudiant/parcours'
+    | '/partenaire/etudiants'
+    | '/partenaire/missions'
+    | '/professeur/etudiants'
+    | '/professeur/missions'
+    | '/professeur/modules'
+    | '/professeur/parcours'
     | '/professeur/partenaires'
+    | '/professeur/prolongations'
+    | '/professeur/validations'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -330,7 +418,15 @@ export interface FileRouteTypes {
     | '/etudiant/carnet'
     | '/etudiant/groupe'
     | '/etudiant/parcours'
+    | '/partenaire/etudiants'
+    | '/partenaire/missions'
+    | '/professeur/etudiants'
+    | '/professeur/missions'
+    | '/professeur/modules'
+    | '/professeur/parcours'
     | '/professeur/partenaires'
+    | '/professeur/prolongations'
+    | '/professeur/validations'
   id:
     | '__root__'
     | '/'
@@ -359,7 +455,15 @@ export interface FileRouteTypes {
     | '/_authenticated/etudiant/carnet'
     | '/_authenticated/etudiant/groupe'
     | '/_authenticated/etudiant/parcours'
+    | '/_authenticated/partenaire/etudiants'
+    | '/_authenticated/partenaire/missions'
+    | '/_authenticated/professeur/etudiants'
+    | '/_authenticated/professeur/missions'
+    | '/_authenticated/professeur/modules'
+    | '/_authenticated/professeur/parcours'
     | '/_authenticated/professeur/partenaires'
+    | '/_authenticated/professeur/prolongations'
+    | '/_authenticated/professeur/validations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -448,12 +552,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/professeur/validations': {
+      id: '/_authenticated/professeur/validations'
+      path: '/validations'
+      fullPath: '/professeur/validations'
+      preLoaderRoute: typeof AuthenticatedProfesseurValidationsRouteImport
+      parentRoute: typeof AuthenticatedProfesseurRoute
+    }
+    '/_authenticated/professeur/prolongations': {
+      id: '/_authenticated/professeur/prolongations'
+      path: '/prolongations'
+      fullPath: '/professeur/prolongations'
+      preLoaderRoute: typeof AuthenticatedProfesseurProlongationsRouteImport
+      parentRoute: typeof AuthenticatedProfesseurRoute
+    }
     '/_authenticated/professeur/partenaires': {
       id: '/_authenticated/professeur/partenaires'
       path: '/partenaires'
       fullPath: '/professeur/partenaires'
       preLoaderRoute: typeof AuthenticatedProfesseurPartenairesRouteImport
       parentRoute: typeof AuthenticatedProfesseurRoute
+    }
+    '/_authenticated/professeur/parcours': {
+      id: '/_authenticated/professeur/parcours'
+      path: '/parcours'
+      fullPath: '/professeur/parcours'
+      preLoaderRoute: typeof AuthenticatedProfesseurParcoursRouteImport
+      parentRoute: typeof AuthenticatedProfesseurRoute
+    }
+    '/_authenticated/professeur/modules': {
+      id: '/_authenticated/professeur/modules'
+      path: '/modules'
+      fullPath: '/professeur/modules'
+      preLoaderRoute: typeof AuthenticatedProfesseurModulesRouteImport
+      parentRoute: typeof AuthenticatedProfesseurRoute
+    }
+    '/_authenticated/professeur/missions': {
+      id: '/_authenticated/professeur/missions'
+      path: '/missions'
+      fullPath: '/professeur/missions'
+      preLoaderRoute: typeof AuthenticatedProfesseurMissionsRouteImport
+      parentRoute: typeof AuthenticatedProfesseurRoute
+    }
+    '/_authenticated/professeur/etudiants': {
+      id: '/_authenticated/professeur/etudiants'
+      path: '/etudiants'
+      fullPath: '/professeur/etudiants'
+      preLoaderRoute: typeof AuthenticatedProfesseurEtudiantsRouteImport
+      parentRoute: typeof AuthenticatedProfesseurRoute
+    }
+    '/_authenticated/partenaire/missions': {
+      id: '/_authenticated/partenaire/missions'
+      path: '/missions'
+      fullPath: '/partenaire/missions'
+      preLoaderRoute: typeof AuthenticatedPartenaireMissionsRouteImport
+      parentRoute: typeof AuthenticatedPartenaireRoute
+    }
+    '/_authenticated/partenaire/etudiants': {
+      id: '/_authenticated/partenaire/etudiants'
+      path: '/etudiants'
+      fullPath: '/partenaire/etudiants'
+      preLoaderRoute: typeof AuthenticatedPartenaireEtudiantsRouteImport
+      parentRoute: typeof AuthenticatedPartenaireRoute
     }
     '/_authenticated/etudiant/parcours': {
       id: '/_authenticated/etudiant/parcours'
@@ -613,14 +773,46 @@ const AuthenticatedEtudiantRouteWithChildren =
     AuthenticatedEtudiantRouteChildren,
   )
 
+interface AuthenticatedPartenaireRouteChildren {
+  AuthenticatedPartenaireEtudiantsRoute: typeof AuthenticatedPartenaireEtudiantsRoute
+  AuthenticatedPartenaireMissionsRoute: typeof AuthenticatedPartenaireMissionsRoute
+}
+
+const AuthenticatedPartenaireRouteChildren: AuthenticatedPartenaireRouteChildren =
+  {
+    AuthenticatedPartenaireEtudiantsRoute:
+      AuthenticatedPartenaireEtudiantsRoute,
+    AuthenticatedPartenaireMissionsRoute: AuthenticatedPartenaireMissionsRoute,
+  }
+
+const AuthenticatedPartenaireRouteWithChildren =
+  AuthenticatedPartenaireRoute._addFileChildren(
+    AuthenticatedPartenaireRouteChildren,
+  )
+
 interface AuthenticatedProfesseurRouteChildren {
+  AuthenticatedProfesseurEtudiantsRoute: typeof AuthenticatedProfesseurEtudiantsRoute
+  AuthenticatedProfesseurMissionsRoute: typeof AuthenticatedProfesseurMissionsRoute
+  AuthenticatedProfesseurModulesRoute: typeof AuthenticatedProfesseurModulesRoute
+  AuthenticatedProfesseurParcoursRoute: typeof AuthenticatedProfesseurParcoursRoute
   AuthenticatedProfesseurPartenairesRoute: typeof AuthenticatedProfesseurPartenairesRoute
+  AuthenticatedProfesseurProlongationsRoute: typeof AuthenticatedProfesseurProlongationsRoute
+  AuthenticatedProfesseurValidationsRoute: typeof AuthenticatedProfesseurValidationsRoute
 }
 
 const AuthenticatedProfesseurRouteChildren: AuthenticatedProfesseurRouteChildren =
   {
+    AuthenticatedProfesseurEtudiantsRoute:
+      AuthenticatedProfesseurEtudiantsRoute,
+    AuthenticatedProfesseurMissionsRoute: AuthenticatedProfesseurMissionsRoute,
+    AuthenticatedProfesseurModulesRoute: AuthenticatedProfesseurModulesRoute,
+    AuthenticatedProfesseurParcoursRoute: AuthenticatedProfesseurParcoursRoute,
     AuthenticatedProfesseurPartenairesRoute:
       AuthenticatedProfesseurPartenairesRoute,
+    AuthenticatedProfesseurProlongationsRoute:
+      AuthenticatedProfesseurProlongationsRoute,
+    AuthenticatedProfesseurValidationsRoute:
+      AuthenticatedProfesseurValidationsRoute,
   }
 
 const AuthenticatedProfesseurRouteWithChildren =
@@ -632,7 +824,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedEtudiantRoute: typeof AuthenticatedEtudiantRouteWithChildren
-  AuthenticatedPartenaireRoute: typeof AuthenticatedPartenaireRoute
+  AuthenticatedPartenaireRoute: typeof AuthenticatedPartenaireRouteWithChildren
   AuthenticatedProfesseurRoute: typeof AuthenticatedProfesseurRouteWithChildren
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
 }
@@ -641,7 +833,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedEtudiantRoute: AuthenticatedEtudiantRouteWithChildren,
-  AuthenticatedPartenaireRoute: AuthenticatedPartenaireRoute,
+  AuthenticatedPartenaireRoute: AuthenticatedPartenaireRouteWithChildren,
   AuthenticatedProfesseurRoute: AuthenticatedProfesseurRouteWithChildren,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
 }
