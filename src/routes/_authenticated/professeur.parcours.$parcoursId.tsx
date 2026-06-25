@@ -21,7 +21,7 @@ function Page() {
   const [parcours, setParcours] = useState<{ nom: string; description: string | null } | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [etudiants, setEtudiants] = useState<EtuRow[]>([]);
-  const [sessions, setSessions] = useState<{ id: string; date_session: string; statut: string }[]>([]);
+  const [sessions, setSessions] = useState<{ id: string; date_session: string; statut: string | null }[]>([]);
 
   useEffect(() => {
     (async () => {

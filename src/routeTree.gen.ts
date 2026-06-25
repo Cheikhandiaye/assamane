@@ -44,6 +44,7 @@ import { Route as AuthenticatedAdminMissionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminEtudiantsRouteImport } from './routes/_authenticated/admin.etudiants'
 import { Route as AuthenticatedAdminCahierDeTexteRouteImport } from './routes/_authenticated/admin.cahier-de-texte'
 import { Route as AuthenticatedAdminBibliothequeRouteImport } from './routes/_authenticated/admin.bibliotheque'
+import { Route as AuthenticatedProfesseurParcoursParcoursIdRouteImport } from './routes/_authenticated/professeur.parcours.$parcoursId'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -243,6 +244,12 @@ const AuthenticatedAdminBibliothequeRoute =
     path: '/bibliotheque',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedProfesseurParcoursParcoursIdRoute =
+  AuthenticatedProfesseurParcoursParcoursIdRouteImport.update({
+    id: '/$parcoursId',
+    path: '/$parcoursId',
+    getParentRoute: () => AuthenticatedProfesseurParcoursRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -275,10 +282,11 @@ export interface FileRoutesByFullPath {
   '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
-  '/professeur/parcours': typeof AuthenticatedProfesseurParcoursRoute
+  '/professeur/parcours': typeof AuthenticatedProfesseurParcoursRouteWithChildren
   '/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
   '/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
   '/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
+  '/professeur/parcours/$parcoursId': typeof AuthenticatedProfesseurParcoursParcoursIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -311,10 +319,11 @@ export interface FileRoutesByTo {
   '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
-  '/professeur/parcours': typeof AuthenticatedProfesseurParcoursRoute
+  '/professeur/parcours': typeof AuthenticatedProfesseurParcoursRouteWithChildren
   '/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
   '/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
   '/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
+  '/professeur/parcours/$parcoursId': typeof AuthenticatedProfesseurParcoursParcoursIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -349,10 +358,11 @@ export interface FileRoutesById {
   '/_authenticated/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/_authenticated/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/_authenticated/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
-  '/_authenticated/professeur/parcours': typeof AuthenticatedProfesseurParcoursRoute
+  '/_authenticated/professeur/parcours': typeof AuthenticatedProfesseurParcoursRouteWithChildren
   '/_authenticated/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
   '/_authenticated/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
   '/_authenticated/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
+  '/_authenticated/professeur/parcours/$parcoursId': typeof AuthenticatedProfesseurParcoursParcoursIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/professeur/partenaires'
     | '/professeur/prolongations'
     | '/professeur/validations'
+    | '/professeur/parcours/$parcoursId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -427,6 +438,7 @@ export interface FileRouteTypes {
     | '/professeur/partenaires'
     | '/professeur/prolongations'
     | '/professeur/validations'
+    | '/professeur/parcours/$parcoursId'
   id:
     | '__root__'
     | '/'
@@ -464,6 +476,7 @@ export interface FileRouteTypes {
     | '/_authenticated/professeur/partenaires'
     | '/_authenticated/professeur/prolongations'
     | '/_authenticated/professeur/validations'
+    | '/_authenticated/professeur/parcours/$parcoursId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -720,6 +733,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBibliothequeRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/professeur/parcours/$parcoursId': {
+      id: '/_authenticated/professeur/parcours/$parcoursId'
+      path: '/$parcoursId'
+      fullPath: '/professeur/parcours/$parcoursId'
+      preLoaderRoute: typeof AuthenticatedProfesseurParcoursParcoursIdRouteImport
+      parentRoute: typeof AuthenticatedProfesseurParcoursRoute
+    }
   }
 }
 
@@ -790,11 +810,26 @@ const AuthenticatedPartenaireRouteWithChildren =
     AuthenticatedPartenaireRouteChildren,
   )
 
+interface AuthenticatedProfesseurParcoursRouteChildren {
+  AuthenticatedProfesseurParcoursParcoursIdRoute: typeof AuthenticatedProfesseurParcoursParcoursIdRoute
+}
+
+const AuthenticatedProfesseurParcoursRouteChildren: AuthenticatedProfesseurParcoursRouteChildren =
+  {
+    AuthenticatedProfesseurParcoursParcoursIdRoute:
+      AuthenticatedProfesseurParcoursParcoursIdRoute,
+  }
+
+const AuthenticatedProfesseurParcoursRouteWithChildren =
+  AuthenticatedProfesseurParcoursRoute._addFileChildren(
+    AuthenticatedProfesseurParcoursRouteChildren,
+  )
+
 interface AuthenticatedProfesseurRouteChildren {
   AuthenticatedProfesseurEtudiantsRoute: typeof AuthenticatedProfesseurEtudiantsRoute
   AuthenticatedProfesseurMissionsRoute: typeof AuthenticatedProfesseurMissionsRoute
   AuthenticatedProfesseurModulesRoute: typeof AuthenticatedProfesseurModulesRoute
-  AuthenticatedProfesseurParcoursRoute: typeof AuthenticatedProfesseurParcoursRoute
+  AuthenticatedProfesseurParcoursRoute: typeof AuthenticatedProfesseurParcoursRouteWithChildren
   AuthenticatedProfesseurPartenairesRoute: typeof AuthenticatedProfesseurPartenairesRoute
   AuthenticatedProfesseurProlongationsRoute: typeof AuthenticatedProfesseurProlongationsRoute
   AuthenticatedProfesseurValidationsRoute: typeof AuthenticatedProfesseurValidationsRoute
@@ -806,7 +841,8 @@ const AuthenticatedProfesseurRouteChildren: AuthenticatedProfesseurRouteChildren
       AuthenticatedProfesseurEtudiantsRoute,
     AuthenticatedProfesseurMissionsRoute: AuthenticatedProfesseurMissionsRoute,
     AuthenticatedProfesseurModulesRoute: AuthenticatedProfesseurModulesRoute,
-    AuthenticatedProfesseurParcoursRoute: AuthenticatedProfesseurParcoursRoute,
+    AuthenticatedProfesseurParcoursRoute:
+      AuthenticatedProfesseurParcoursRouteWithChildren,
     AuthenticatedProfesseurPartenairesRoute:
       AuthenticatedProfesseurPartenairesRoute,
     AuthenticatedProfesseurProlongationsRoute:
