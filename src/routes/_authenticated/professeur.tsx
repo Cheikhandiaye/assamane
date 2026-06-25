@@ -19,7 +19,7 @@ function ProfDashboard() {
       const { data: pp } = await supabase.from("parcours_professeurs").select("parcours_id").eq("professeur_id", user.id);
       const parcoursIds = (pp ?? []).map((p) => p.parcours_id);
       const [{ count: nbModules }, { count: nbValidations }, { count: nbSessions }] = await Promise.all([
-        supabase.from("modules_cours").select("*", { count: "exact", head: true }).eq("createur_id", user.id),
+        supabase.from("modules_cours").select("*", { count: "exact", head: true }).eq("created_by", user.id),
         supabase.from("reponses_etudiant").select("*", { count: "exact", head: true }).eq("statut", "soumis"),
         supabase.from("sessions_cours").select("*", { count: "exact", head: true }).eq("professeur_id", user.id).eq("statut", "ouverte"),
       ]);
