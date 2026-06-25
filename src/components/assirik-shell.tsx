@@ -88,6 +88,29 @@ export function AssirikShell({ title, children }: { title: string; children: Rea
   const { fullName, role, user } = useCurrentUser();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [brand, setBrand] = useState<{ nom: string; logo_url: string | null } | null>(null);
+
+  useEffect(() => {
+    if (role !== "partenaire" || !user) {
+      applyBrand(null);
+      setBrand(null);
+      return;
+    }
+    (async () => {
+      const { data: prof } = await supabase.from("profiles").select("partenaire_id").eq("id", user.id).maybeSingle();
+      if (!prof?.partenaire_id) return;
+      const { data: p } = await supabase
+        .from("partenaires")
+        .select("nom, logo_url, couleur_primaire, couleur_secondaire")
+        .eq("id", prof.partenaire_id)
+        .maybeSingle();
+      if (p) {
+        applyBrand({ couleur_primaire: p.couleur_primaire, couleur_secondaire: p.couleur_secondaire });
+        setBrand({ nom: p.nom, logo_url: p.logo_url });
+      }
+    })();
+    return () => applyBrand(null);
+  }, [role, user?.id]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
