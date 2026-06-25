@@ -34,6 +34,12 @@ function Page() {
       commentaire_admin: e.commentaire_admin || null,
     }).eq("id", id);
     if (error) return toast.error(error.message);
+    if (statut === "acceptee" && e.date_accordee) {
+      const row = rows.find((r) => r.id === id);
+      if (row?.mission_id) {
+        await supabase.from("missions").update({ date_fin: e.date_accordee }).eq("id", row.mission_id);
+      }
+    }
     toast.success("Décision enregistrée"); load();
   }
 
