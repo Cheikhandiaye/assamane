@@ -30,6 +30,7 @@ import { Route as AuthenticatedProfesseurEtudiantsRouteImport } from './routes/_
 import { Route as AuthenticatedPartenaireMissionsRouteImport } from './routes/_authenticated/partenaire.missions'
 import { Route as AuthenticatedPartenaireEtudiantsRouteImport } from './routes/_authenticated/partenaire.etudiants'
 import { Route as AuthenticatedEtudiantParcoursRouteImport } from './routes/_authenticated/etudiant.parcours'
+import { Route as AuthenticatedEtudiantNotificationsRouteImport } from './routes/_authenticated/etudiant.notifications'
 import { Route as AuthenticatedEtudiantGroupeRouteImport } from './routes/_authenticated/etudiant.groupe'
 import { Route as AuthenticatedEtudiantCarnetRouteImport } from './routes/_authenticated/etudiant.carnet'
 import { Route as AuthenticatedEtudiantBadgesRouteImport } from './routes/_authenticated/etudiant.badges'
@@ -161,6 +162,12 @@ const AuthenticatedEtudiantParcoursRoute =
     path: '/parcours',
     getParentRoute: () => AuthenticatedEtudiantRoute,
   } as any)
+const AuthenticatedEtudiantNotificationsRoute =
+  AuthenticatedEtudiantNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedEtudiantRoute,
+  } as any)
 const AuthenticatedEtudiantGroupeRoute =
   AuthenticatedEtudiantGroupeRouteImport.update({
     id: '/groupe',
@@ -283,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
+  '/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
   '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
@@ -321,6 +329,7 @@ export interface FileRoutesByTo {
   '/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
+  '/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
   '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
@@ -361,6 +370,7 @@ export interface FileRoutesById {
   '/_authenticated/etudiant/badges': typeof AuthenticatedEtudiantBadgesRoute
   '/_authenticated/etudiant/carnet': typeof AuthenticatedEtudiantCarnetRoute
   '/_authenticated/etudiant/groupe': typeof AuthenticatedEtudiantGroupeRoute
+  '/_authenticated/etudiant/notifications': typeof AuthenticatedEtudiantNotificationsRoute
   '/_authenticated/etudiant/parcours': typeof AuthenticatedEtudiantParcoursRoute
   '/_authenticated/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/_authenticated/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
@@ -401,6 +411,7 @@ export interface FileRouteTypes {
     | '/etudiant/badges'
     | '/etudiant/carnet'
     | '/etudiant/groupe'
+    | '/etudiant/notifications'
     | '/etudiant/parcours'
     | '/partenaire/etudiants'
     | '/partenaire/missions'
@@ -439,6 +450,7 @@ export interface FileRouteTypes {
     | '/etudiant/badges'
     | '/etudiant/carnet'
     | '/etudiant/groupe'
+    | '/etudiant/notifications'
     | '/etudiant/parcours'
     | '/partenaire/etudiants'
     | '/partenaire/missions'
@@ -478,6 +490,7 @@ export interface FileRouteTypes {
     | '/_authenticated/etudiant/badges'
     | '/_authenticated/etudiant/carnet'
     | '/_authenticated/etudiant/groupe'
+    | '/_authenticated/etudiant/notifications'
     | '/_authenticated/etudiant/parcours'
     | '/_authenticated/partenaire/etudiants'
     | '/_authenticated/partenaire/missions'
@@ -648,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEtudiantParcoursRouteImport
       parentRoute: typeof AuthenticatedEtudiantRoute
     }
+    '/_authenticated/etudiant/notifications': {
+      id: '/_authenticated/etudiant/notifications'
+      path: '/notifications'
+      fullPath: '/etudiant/notifications'
+      preLoaderRoute: typeof AuthenticatedEtudiantNotificationsRouteImport
+      parentRoute: typeof AuthenticatedEtudiantRoute
+    }
     '/_authenticated/etudiant/groupe': {
       id: '/_authenticated/etudiant/groupe'
       path: '/groupe'
@@ -798,6 +818,7 @@ interface AuthenticatedEtudiantRouteChildren {
   AuthenticatedEtudiantBadgesRoute: typeof AuthenticatedEtudiantBadgesRoute
   AuthenticatedEtudiantCarnetRoute: typeof AuthenticatedEtudiantCarnetRoute
   AuthenticatedEtudiantGroupeRoute: typeof AuthenticatedEtudiantGroupeRoute
+  AuthenticatedEtudiantNotificationsRoute: typeof AuthenticatedEtudiantNotificationsRoute
   AuthenticatedEtudiantParcoursRoute: typeof AuthenticatedEtudiantParcoursRoute
 }
 
@@ -805,6 +826,8 @@ const AuthenticatedEtudiantRouteChildren: AuthenticatedEtudiantRouteChildren = {
   AuthenticatedEtudiantBadgesRoute: AuthenticatedEtudiantBadgesRoute,
   AuthenticatedEtudiantCarnetRoute: AuthenticatedEtudiantCarnetRoute,
   AuthenticatedEtudiantGroupeRoute: AuthenticatedEtudiantGroupeRoute,
+  AuthenticatedEtudiantNotificationsRoute:
+    AuthenticatedEtudiantNotificationsRoute,
   AuthenticatedEtudiantParcoursRoute: AuthenticatedEtudiantParcoursRoute,
 }
 
