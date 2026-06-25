@@ -1,3 +1,4 @@
+import { useRoleGuard } from "@/hooks/use-role-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
@@ -27,6 +28,7 @@ interface ParcoursRow extends Parcours {
 }
 
 function AdminParcoursPage() {
+  useRoleGuard("admin");
   const [items, setItems] = useState<ParcoursRow[]>([]);
   const [missions, setMissions] = useState<MissionOption[]>([]);
   const [loading, setLoading] = useState(true);

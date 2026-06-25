@@ -4,12 +4,14 @@ import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { BookOpen, Users, CheckSquare, CalendarCheck, Layers } from "lucide-react";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 export const Route = createFileRoute("/_authenticated/professeur")({
   component: ProfDashboard,
 });
 
 function ProfDashboard() {
+  useRoleGuard("professeur");
   const { user } = useCurrentUser();
   const [stats, setStats] = useState<{ label: string; value: number; icon: typeof BookOpen }[]>([]);
 

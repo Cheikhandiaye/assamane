@@ -5,12 +5,14 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, CheckCircle, BarChart3 } from "lucide-react";
 import { formatNote } from "@/lib/note-engine";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 
 export const Route = createFileRoute("/_authenticated/etudiant")({
   component: EtudiantDashboard,
 });
 
 function EtudiantDashboard() {
+  useRoleGuard("etudiant");
   const { fullName, user } = useCurrentUser();
   const [etapesValidees, setEtapesValidees] = useState(0);
   const [nbBadges, setNbBadges] = useState(0);

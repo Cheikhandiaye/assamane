@@ -1,3 +1,4 @@
+import { useRoleGuard } from "@/hooks/use-role-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/admin/partenaires")({
 });
 
 function AdminPartenairesPage() {
+  useRoleGuard("admin");
   const [items, setItems] = useState<Partenaire[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
