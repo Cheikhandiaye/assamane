@@ -1310,6 +1310,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_partenaire: {
+        Args: { _partenaire_id: string }
+        Returns: boolean
+      }
+      can_view_profile: { Args: { _target: string }; Returns: boolean }
       fn_check_badges: {
         Args: { p_etudiant_id: string; p_parcours_id: string }
         Returns: undefined
