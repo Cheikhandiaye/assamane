@@ -1,3 +1,4 @@
+import { useRoleGuard } from "@/hooks/use-role-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
@@ -7,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Plus, Pencil, Trash2, BookOpen, Search, Target } from "lucide-react";
 import { ParcoursFormDialog, type Parcours, type MissionOption } from "@/components/parcours-form";
 import {
-import { useRoleGuard } from "@/hooks/use-role-guard";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
