@@ -59,6 +59,7 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
   ],
   professeur: [
     { label: "Mon tableau de bord", to: "/professeur", icon: LayoutDashboard },
+    { label: "Partenaires", to: "/professeur/partenaires", icon: Building2 },
     { label: "Mes missions", to: "/professeur/missions", icon: Target },
     { label: "Mes parcours", to: "/professeur/parcours", icon: BookOpen },
     { label: "Mes étudiants", to: "/professeur/etudiants", icon: Users },
