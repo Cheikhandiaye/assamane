@@ -47,7 +47,7 @@ function Page() {
     ]);
     setParcours(p as never);
     setEtu(e);
-    const sorted = ((mods ?? []) as Module[]).map((m) => ({
+    const sorted = ((mods ?? []) as unknown as Module[]).map((m) => ({
       ...m,
       etapes: (m.etapes ?? []).map((et) => ({ ...et, champs: Array.isArray(et.champs) ? (et.champs as FieldConfig[]) : [] })).sort((a, b) => a.ordre - b.ordre),
     }));
@@ -59,7 +59,7 @@ function Page() {
       (ri ?? []).forEach((r) => (map[r.etape_id!] = r as never));
       setReps(map);
       const { data: grp } = await supabase.from("groupe_membres").select("groupe_id, groupes!inner(parcours_id)").eq("etudiant_id", etudiantId);
-      const groupeId = (grp ?? []).find((g: { groupes: { parcours_id: string } | null }) => g.groupes?.parcours_id === parcoursId)?.groupe_id;
+      const groupeId = (grp ?? []).find((g) => (g as unknown as { groupes: { parcours_id: string } | null }).groupes?.parcours_id === parcoursId)?.groupe_id;
       if (groupeId) {
         const { data: rg } = await supabase.from("reponses_groupe").select("*").eq("groupe_id", groupeId).in("etape_id", etapeIds);
         const gmap: Record<string, Reponse> = {};
@@ -100,8 +100,7 @@ function Page() {
       const { error } = await supabase.from(table).update(payload).eq("id", rep.id);
       if (error) return toast.error(error.message);
     } else if (statut === "valide" && form.letat) {
-      const insert: Record<string, unknown> = { ...payload, etape_id: dialog.etape.id, parcours_id: parcoursId, contenu: {} };
-      if (table === "reponses_etudiant") insert.etudiant_id = etudiantId;
+      const insert = { ...payload, etape_id: dialog.etape.id, parcours_id: parcoursId, contenu: {}, etudiant_id: etudiantId };
       const { error } = await supabase.from(table).insert(insert as never);
       if (error) return toast.error(error.message);
     } else {
