@@ -14,7 +14,7 @@ interface ModuleRow {
   titre: string;
   description: string | null;
   ordre: number;
-  parcours_id: string;
+  parcours_id: string | null;
   statut: "verrouille" | "online" | "carnet" | "attente" | "valide";
   note?: number | null;
   pourcent?: number;
