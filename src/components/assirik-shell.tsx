@@ -20,6 +20,9 @@ import {
   Home,
   NotebookPen,
   Trophy,
+  Bell,
+  Award,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -55,6 +58,9 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
     { label: "Bibliothèque", to: "/admin/bibliotheque", icon: Library },
     { label: "Cahier de texte", to: "/admin/cahier-de-texte", icon: ClipboardList },
     { label: "Sessions", to: "/admin/sessions", icon: CalendarCheck },
+    { label: "Groupes", to: "/admin/groupes", icon: Users },
+    { label: "Badges", to: "/admin/badges", icon: Award },
+    { label: "Notifications", to: "/admin/notifications", icon: Megaphone },
     { label: "Validations", to: "/admin/validations", icon: CheckSquare },
     { label: "Prolongations", to: "/admin/prolongations", icon: Clock },
     { label: "Paramètres", to: "/admin/parametres", icon: Settings },
@@ -73,12 +79,15 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
     { label: "Accueil", to: "/etudiant", icon: Home },
     { label: "Parcours", to: "/etudiant/parcours", icon: BookOpen },
     { label: "Carnet", to: "/etudiant/carnet", icon: NotebookPen },
+    { label: "Sessions", to: "/etudiant/sessions", icon: CalendarCheck },
     { label: "Groupe", to: "/etudiant/groupe", icon: Users },
     { label: "Badges", to: "/etudiant/badges", icon: Trophy },
+    { label: "Notifications", to: "/etudiant/notifications", icon: Bell },
   ],
   partenaire: [
     { label: "Tableau de bord", to: "/partenaire", icon: LayoutDashboard },
     { label: "Mes missions", to: "/partenaire/missions", icon: Target },
+    { label: "Parcours", to: "/partenaire/parcours", icon: BookOpen },
     { label: "Mes étudiants", to: "/partenaire/etudiants", icon: Users },
   ],
 };

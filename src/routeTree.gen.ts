@@ -27,6 +27,7 @@ import { Route as AuthenticatedProfesseurParcoursRouteImport } from './routes/_a
 import { Route as AuthenticatedProfesseurModulesRouteImport } from './routes/_authenticated/professeur.modules'
 import { Route as AuthenticatedProfesseurMissionsRouteImport } from './routes/_authenticated/professeur.missions'
 import { Route as AuthenticatedProfesseurEtudiantsRouteImport } from './routes/_authenticated/professeur.etudiants'
+import { Route as AuthenticatedPartenaireParcoursRouteImport } from './routes/_authenticated/partenaire.parcours'
 import { Route as AuthenticatedPartenaireMissionsRouteImport } from './routes/_authenticated/partenaire.missions'
 import { Route as AuthenticatedPartenaireEtudiantsRouteImport } from './routes/_authenticated/partenaire.etudiants'
 import { Route as AuthenticatedEtudiantSessionsRouteImport } from './routes/_authenticated/etudiant.sessions'
@@ -147,6 +148,12 @@ const AuthenticatedProfesseurEtudiantsRoute =
     id: '/etudiants',
     path: '/etudiants',
     getParentRoute: () => AuthenticatedProfesseurRoute,
+  } as any)
+const AuthenticatedPartenaireParcoursRoute =
+  AuthenticatedPartenaireParcoursRouteImport.update({
+    id: '/parcours',
+    path: '/parcours',
+    getParentRoute: () => AuthenticatedPartenaireRoute,
   } as any)
 const AuthenticatedPartenaireMissionsRoute =
   AuthenticatedPartenaireMissionsRouteImport.update({
@@ -326,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/partenaire/parcours': typeof AuthenticatedPartenaireParcoursRoute
   '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
@@ -369,6 +377,7 @@ export interface FileRoutesByTo {
   '/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/partenaire/parcours': typeof AuthenticatedPartenaireParcoursRoute
   '/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
@@ -414,6 +423,7 @@ export interface FileRoutesById {
   '/_authenticated/etudiant/sessions': typeof AuthenticatedEtudiantSessionsRoute
   '/_authenticated/partenaire/etudiants': typeof AuthenticatedPartenaireEtudiantsRoute
   '/_authenticated/partenaire/missions': typeof AuthenticatedPartenaireMissionsRoute
+  '/_authenticated/partenaire/parcours': typeof AuthenticatedPartenaireParcoursRoute
   '/_authenticated/professeur/etudiants': typeof AuthenticatedProfesseurEtudiantsRoute
   '/_authenticated/professeur/missions': typeof AuthenticatedProfesseurMissionsRoute
   '/_authenticated/professeur/modules': typeof AuthenticatedProfesseurModulesRoute
@@ -459,6 +469,7 @@ export interface FileRouteTypes {
     | '/etudiant/sessions'
     | '/partenaire/etudiants'
     | '/partenaire/missions'
+    | '/partenaire/parcours'
     | '/professeur/etudiants'
     | '/professeur/missions'
     | '/professeur/modules'
@@ -502,6 +513,7 @@ export interface FileRouteTypes {
     | '/etudiant/sessions'
     | '/partenaire/etudiants'
     | '/partenaire/missions'
+    | '/partenaire/parcours'
     | '/professeur/etudiants'
     | '/professeur/missions'
     | '/professeur/modules'
@@ -546,6 +558,7 @@ export interface FileRouteTypes {
     | '/_authenticated/etudiant/sessions'
     | '/_authenticated/partenaire/etudiants'
     | '/_authenticated/partenaire/missions'
+    | '/_authenticated/partenaire/parcours'
     | '/_authenticated/professeur/etudiants'
     | '/_authenticated/professeur/missions'
     | '/_authenticated/professeur/modules'
@@ -691,6 +704,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/professeur/etudiants'
       preLoaderRoute: typeof AuthenticatedProfesseurEtudiantsRouteImport
       parentRoute: typeof AuthenticatedProfesseurRoute
+    }
+    '/_authenticated/partenaire/parcours': {
+      id: '/_authenticated/partenaire/parcours'
+      path: '/parcours'
+      fullPath: '/partenaire/parcours'
+      preLoaderRoute: typeof AuthenticatedPartenaireParcoursRouteImport
+      parentRoute: typeof AuthenticatedPartenaireRoute
     }
     '/_authenticated/partenaire/missions': {
       id: '/_authenticated/partenaire/missions'
@@ -927,6 +947,7 @@ const AuthenticatedEtudiantRouteWithChildren =
 interface AuthenticatedPartenaireRouteChildren {
   AuthenticatedPartenaireEtudiantsRoute: typeof AuthenticatedPartenaireEtudiantsRoute
   AuthenticatedPartenaireMissionsRoute: typeof AuthenticatedPartenaireMissionsRoute
+  AuthenticatedPartenaireParcoursRoute: typeof AuthenticatedPartenaireParcoursRoute
 }
 
 const AuthenticatedPartenaireRouteChildren: AuthenticatedPartenaireRouteChildren =
@@ -934,6 +955,7 @@ const AuthenticatedPartenaireRouteChildren: AuthenticatedPartenaireRouteChildren
     AuthenticatedPartenaireEtudiantsRoute:
       AuthenticatedPartenaireEtudiantsRoute,
     AuthenticatedPartenaireMissionsRoute: AuthenticatedPartenaireMissionsRoute,
+    AuthenticatedPartenaireParcoursRoute: AuthenticatedPartenaireParcoursRoute,
   }
 
 const AuthenticatedPartenaireRouteWithChildren =
