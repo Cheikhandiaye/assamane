@@ -43,6 +43,7 @@ import { Route as AuthenticatedAdminPartenairesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminParcoursRouteImport } from './routes/_authenticated/admin.parcours'
 import { Route as AuthenticatedAdminParametresRouteImport } from './routes/_authenticated/admin.parametres'
 import { Route as AuthenticatedAdminMissionsRouteImport } from './routes/_authenticated/admin.missions'
+import { Route as AuthenticatedAdminGroupesRouteImport } from './routes/_authenticated/admin.groupes'
 import { Route as AuthenticatedAdminEtudiantsRouteImport } from './routes/_authenticated/admin.etudiants'
 import { Route as AuthenticatedAdminCahierDeTexteRouteImport } from './routes/_authenticated/admin.cahier-de-texte'
 import { Route as AuthenticatedAdminBibliothequeRouteImport } from './routes/_authenticated/admin.bibliotheque'
@@ -241,6 +242,12 @@ const AuthenticatedAdminMissionsRoute =
     path: '/missions',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminGroupesRoute =
+  AuthenticatedAdminGroupesRouteImport.update({
+    id: '/groupes',
+    path: '/groupes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminEtudiantsRoute =
   AuthenticatedAdminEtudiantsRouteImport.update({
     id: '/etudiants',
@@ -286,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
+  '/admin/groupes': typeof AuthenticatedAdminGroupesRoute
   '/admin/missions': typeof AuthenticatedAdminMissionsRoute
   '/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/admin/parcours': typeof AuthenticatedAdminParcoursRoute
@@ -326,6 +334,7 @@ export interface FileRoutesByTo {
   '/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
+  '/admin/groupes': typeof AuthenticatedAdminGroupesRoute
   '/admin/missions': typeof AuthenticatedAdminMissionsRoute
   '/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/admin/parcours': typeof AuthenticatedAdminParcoursRoute
@@ -368,6 +377,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/bibliotheque': typeof AuthenticatedAdminBibliothequeRoute
   '/_authenticated/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/_authenticated/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
+  '/_authenticated/admin/groupes': typeof AuthenticatedAdminGroupesRoute
   '/_authenticated/admin/missions': typeof AuthenticatedAdminMissionsRoute
   '/_authenticated/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/_authenticated/admin/parcours': typeof AuthenticatedAdminParcoursRoute
@@ -410,6 +420,7 @@ export interface FileRouteTypes {
     | '/admin/bibliotheque'
     | '/admin/cahier-de-texte'
     | '/admin/etudiants'
+    | '/admin/groupes'
     | '/admin/missions'
     | '/admin/parametres'
     | '/admin/parcours'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/admin/bibliotheque'
     | '/admin/cahier-de-texte'
     | '/admin/etudiants'
+    | '/admin/groupes'
     | '/admin/missions'
     | '/admin/parametres'
     | '/admin/parcours'
@@ -491,6 +503,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/bibliotheque'
     | '/_authenticated/admin/cahier-de-texte'
     | '/_authenticated/admin/etudiants'
+    | '/_authenticated/admin/groupes'
     | '/_authenticated/admin/missions'
     | '/_authenticated/admin/parametres'
     | '/_authenticated/admin/parcours'
@@ -765,6 +778,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMissionsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/groupes': {
+      id: '/_authenticated/admin/groupes'
+      path: '/groupes'
+      fullPath: '/admin/groupes'
+      preLoaderRoute: typeof AuthenticatedAdminGroupesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/etudiants': {
       id: '/_authenticated/admin/etudiants'
       path: '/etudiants'
@@ -807,6 +827,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBibliothequeRoute: typeof AuthenticatedAdminBibliothequeRoute
   AuthenticatedAdminCahierDeTexteRoute: typeof AuthenticatedAdminCahierDeTexteRoute
   AuthenticatedAdminEtudiantsRoute: typeof AuthenticatedAdminEtudiantsRoute
+  AuthenticatedAdminGroupesRoute: typeof AuthenticatedAdminGroupesRoute
   AuthenticatedAdminMissionsRoute: typeof AuthenticatedAdminMissionsRoute
   AuthenticatedAdminParametresRoute: typeof AuthenticatedAdminParametresRoute
   AuthenticatedAdminParcoursRoute: typeof AuthenticatedAdminParcoursRoute
@@ -821,6 +842,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBibliothequeRoute: AuthenticatedAdminBibliothequeRoute,
   AuthenticatedAdminCahierDeTexteRoute: AuthenticatedAdminCahierDeTexteRoute,
   AuthenticatedAdminEtudiantsRoute: AuthenticatedAdminEtudiantsRoute,
+  AuthenticatedAdminGroupesRoute: AuthenticatedAdminGroupesRoute,
   AuthenticatedAdminMissionsRoute: AuthenticatedAdminMissionsRoute,
   AuthenticatedAdminParametresRoute: AuthenticatedAdminParametresRoute,
   AuthenticatedAdminParcoursRoute: AuthenticatedAdminParcoursRoute,
