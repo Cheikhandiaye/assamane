@@ -5,6 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { uploadPartnerLogo } from "@/lib/storage";
+import { PartnerLogo } from "@/components/partner-logo";
+import { Upload, Loader2 } from "lucide-react";
 
 export interface Partenaire {
   id: string;
@@ -35,6 +38,7 @@ const EMPTY = {
 export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: Props) {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -55,6 +59,19 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function onPickLogo(file: File | null) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Logo > 5 Mo"); return; }
+    setUploading(true);
+    try {
+      const path = await uploadPartnerLogo(file);
+      set("logo_url", path);
+      toast.success("Logo téléversé");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur d'upload");
+    } finally { setUploading(false); }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,7 +118,17 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
           </div>
           <div className="space-y-2">
             <Label htmlFor="logo">URL du logo</Label>
-            <Input id="logo" value={form.logo_url} onChange={(e) => set("logo_url", e.target.value)} placeholder="https://..." />
+            <Input id="logo" value={form.logo_url} onChange={(e) => set("logo_url", e.target.value)} placeholder="https://… ou téléverser ci-dessous" />
+            <div className="flex items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent">
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                Téléverser un fichier
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => onPickLogo(e.target.files?.[0] ?? null)} disabled={uploading} />
+              </label>
+              {form.logo_url && (
+                <PartnerLogo path={form.logo_url} alt="Aperçu" className="h-10 w-10 rounded-md object-cover" />
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">

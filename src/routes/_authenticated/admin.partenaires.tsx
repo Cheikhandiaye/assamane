@@ -106,7 +106,7 @@ function AdminPartenairesPage() {
                   style={{ backgroundColor: p.couleur_primaire ?? "#7C3AED" }}
                 >
                   {p.logo_url ? (
-                    <img src={p.logo_url} alt={p.nom} className="h-full w-full rounded-xl object-cover" />
+                    <PartnerLogo path={p.logo_url} alt={p.nom} className="h-full w-full rounded-xl object-cover" />
                   ) : (
                     p.nom.charAt(0).toUpperCase()
                   )}
