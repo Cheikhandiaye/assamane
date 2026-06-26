@@ -138,7 +138,7 @@ export function AssirikShell({ title, children }: { title: string; children: Rea
     <>
       <Link to="/" className="flex items-center gap-2 px-1">
         {brand?.logo_url ? (
-          <img src={brand.logo_url} alt={brand.nom} className="h-7 w-auto" />
+          <PartnerLogo path={brand.logo_url} alt={brand.nom} className="h-7 w-auto" />
         ) : (
           <Rocket size={24} style={{ color: "var(--brand-primary, #7C3AED)" }} />
         )}

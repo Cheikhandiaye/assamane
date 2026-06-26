@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Building2, Mail, MapPin, Search } from "lucide-react";
 import type { Partenaire } from "@/components/partenaire-form";
+import { PartnerLogo } from "@/components/partner-logo";
 import { toast } from "sonner";
 import { useRoleGuard } from "@/hooks/use-role-guard";
 
@@ -83,7 +84,7 @@ function ProfesseurPartenairesPage() {
                   style={{ backgroundColor: p.couleur_primaire ?? "#7C3AED" }}
                 >
                   {p.logo_url ? (
-                    <img src={p.logo_url} alt={p.nom} className="h-full w-full rounded-xl object-cover" />
+                    <PartnerLogo path={p.logo_url} alt={p.nom} className="h-full w-full rounded-xl object-cover" />
                   ) : (
                     p.nom.charAt(0).toUpperCase()
                   )}

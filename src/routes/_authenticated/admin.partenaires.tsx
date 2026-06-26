@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Pencil, Trash2, Building2, Mail, MapPin, Search } from "lucide-react";
 import { PartenaireFormDialog, type Partenaire } from "@/components/partenaire-form";
+import { PartnerLogo } from "@/components/partner-logo";
 import {
   AlertDialog,
   AlertDialogAction,
