@@ -32,6 +32,7 @@ import { NotificationBell } from "@/components/notification-panel";
 import { ConnectionIndicator } from "@/components/connection-indicator";
 import { OfflineBanner } from "@/components/offline-banner";
 import { applyBrand } from "@/lib/branding";
+import { PartnerLogo } from "@/components/partner-logo";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABEL: Record<AppRole, string> = {
