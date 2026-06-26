@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Pencil, Trash2, Building2, Mail, MapPin, Search } from "lucide-react";
 import { PartenaireFormDialog, type Partenaire } from "@/components/partenaire-form";
+import { PartnerLogo } from "@/components/partner-logo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,7 +107,7 @@ function AdminPartenairesPage() {
                   style={{ backgroundColor: p.couleur_primaire ?? "#7C3AED" }}
                 >
                   {p.logo_url ? (
-                    <img src={p.logo_url} alt={p.nom} className="h-full w-full rounded-xl object-cover" />
+                    <PartnerLogo path={p.logo_url} alt={p.nom} className="h-full w-full rounded-xl object-cover" />
                   ) : (
                     p.nom.charAt(0).toUpperCase()
                   )}

@@ -32,6 +32,7 @@ import { NotificationBell } from "@/components/notification-panel";
 import { ConnectionIndicator } from "@/components/connection-indicator";
 import { OfflineBanner } from "@/components/offline-banner";
 import { applyBrand } from "@/lib/branding";
+import { PartnerLogo } from "@/components/partner-logo";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABEL: Record<AppRole, string> = {
@@ -138,7 +139,7 @@ export function AssirikShell({ title, children }: { title: string; children: Rea
     <>
       <Link to="/" className="flex items-center gap-2 px-1">
         {brand?.logo_url ? (
-          <img src={brand.logo_url} alt={brand.nom} className="h-7 w-auto" />
+          <PartnerLogo path={brand.logo_url} alt={brand.nom} className="h-7 w-auto" />
         ) : (
           <Rocket size={24} style={{ color: "var(--brand-primary, #7C3AED)" }} />
         )}
