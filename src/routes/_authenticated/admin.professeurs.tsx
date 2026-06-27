@@ -25,8 +25,9 @@ function ProfsPage() {
   const delU = useServerFn(deleteUserFn);
 
   async function load() {
-    const { data } = await supabase.from("user_roles").select("user_id, role, profiles!inner(id, full_name, email)").eq("role", "professeur");
-    setRows(data ?? []); setLoading(false);
+    const profs = await fetchUsersByRole("professeur");
+    setRows(profs.map((p) => ({ user_id: p.id, profiles: p })));
+    setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
