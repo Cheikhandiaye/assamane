@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CalendarCheck, Loader2, Plus, X, Users } from "lucide-react";
 import { toast } from "sonner";
+import { usePaginated } from "@/hooks/use-paginated";
+import { PaginationBar } from "@/components/pagination-bar";
 
 export const Route = createFileRoute("/_authenticated/admin/sessions")({ component: Page });
 
@@ -25,6 +27,8 @@ function Page() {
   const [presOpen, setPresOpen] = useState(false);
   const [presSession, setPresSession] = useState<any>(null);
   const [presRows, setPresRows] = useState<{ etudiant_id: string; full_name: string | null; present: boolean }[]>([]);
+
+  const { page, setPage, pageCount, pageItems, total, from, to } = usePaginated(rows, 20);
 
   async function openPresences(s: any) {
     setPresSession(s); setPresOpen(true); setPresRows([]);
@@ -42,7 +46,7 @@ function Page() {
 
   async function load() {
     const [{ data }, { data: pc }, { data: pf }] = await Promise.all([
-      supabase.from("sessions_cours").select("*, parcours(nom), profiles:professeur_id(full_name)").order("date_session", { ascending: false }).limit(50),
+      supabase.from("sessions_cours").select("*, parcours(nom), profiles:professeur_id(full_name)").order("date_session", { ascending: false }),
       supabase.from("parcours").select("id, nom").order("nom"),
       supabase.from("profiles").select("id, full_name, user_roles!inner(role)").eq("user_roles.role", "professeur"),
     ]);
@@ -67,23 +71,34 @@ function Page() {
     <AssirikShell title="📅 Sessions">
       <div className="mb-4 flex justify-end"><Button onClick={() => setOpen(true)}><Plus size={14} className="mr-1" />Créer une session</Button></div>
       {loading ? <Loader2 className="mx-auto animate-spin text-primary" /> : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-left text-xs uppercase"><tr><th className="p-3">Date</th><th className="p-3">Parcours</th><th className="p-3">Prof</th><th className="p-3">Statut</th><th className="p-3"></th></tr></thead>
-            <tbody>{rows.map((r) => (
-              <tr key={r.id} className="border-t border-border">
-                <td className="p-3"><CalendarCheck size={14} className="mr-1 inline text-primary" />{r.date_session}</td>
-                <td className="p-3">{r.parcours?.nom}</td>
-                <td className="p-3">{r.profiles?.full_name}</td>
-                <td className="p-3"><Badge variant={r.statut === "ouverte" ? "default" : "secondary"}>{r.statut}</Badge></td>
-                <td className="p-3 flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openPresences(r)}><Users size={12} className="mr-1" />Présences</Button>
-                  {r.statut === "ouverte" && <Button size="sm" variant="outline" onClick={() => cloturer(r.id)}><X size={12} className="mr-1" />Clôturer</Button>}
-                </td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
+        <>
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-left text-xs uppercase"><tr><th className="p-3">Date</th><th className="p-3">Parcours</th><th className="p-3">Prof</th><th className="p-3">Statut</th><th className="p-3"></th></tr></thead>
+              <tbody>{pageItems.map((r) => (
+                <tr key={r.id} className="border-t border-border">
+                  <td className="p-3"><CalendarCheck size={14} className="mr-1 inline text-primary" />{r.date_session}</td>
+                  <td className="p-3">{r.parcours?.nom}</td>
+                  <td className="p-3">{r.profiles?.full_name}</td>
+                  <td className="p-3"><Badge variant={r.statut === "ouverte" ? "default" : "secondary"}>{r.statut}</Badge></td>
+                  <td className="p-3 flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openPresences(r)}><Users size={12} className="mr-1" />Présences</Button>
+                    {r.statut === "ouverte" && <Button size="sm" variant="outline" onClick={() => cloturer(r.id)}><X size={12} className="mr-1" />Clôturer</Button>}
+                  </td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+
+          <PaginationBar
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            from={from}
+            to={to}
+            onPage={setPage}
+          />
+        </>
       )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
