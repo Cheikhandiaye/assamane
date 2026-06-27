@@ -13,6 +13,8 @@ import { deleteUserFn } from "@/lib/admin-users.functions";
 import { resetCarnet } from "@/lib/reset-carnet.functions";
 import { toast } from "sonner";
 import { RouteErrorBoundary } from "@/components/route-error-boundary";
+import { usePaginated } from "@/hooks/use-paginated";
+import { PaginationBar } from "@/components/pagination-bar";
 
 export const Route = createFileRoute("/_authenticated/admin/etudiants")({
   component: Page,
@@ -146,6 +148,7 @@ function Page() {
       r.profiles?.full_name?.toLowerCase().includes(q.toLowerCase()) ||
       r.profiles?.email?.toLowerCase().includes(q.toLowerCase())
   );
+  const { page, setPage, pageCount, pageItems, total, from, to } = usePaginated(filtered, 20);
 
   return (
     <AssirikShell title="👥 Étudiants">
@@ -181,72 +184,83 @@ function Page() {
       {loading ? (
         <Loader2 className="mx-auto animate-spin text-primary" />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-left text-xs uppercase">
-              <tr>
-                <th className="p-3">Nom</th>
-                <th className="p-3">Email</th>
-                <th className="p-3">Inscrit le</th>
-                <th className="p-3">Progression</th>
-                <th className="p-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((r) => (
-                <tr key={r.user_id} className="relative border-t border-border">
-                  <td className="p-3">
-                    <Users size={14} className="mr-1 inline text-primary" />
-                    {r.profiles?.full_name ?? "—"}
-                  </td>
-                  <td className="p-3">{r.profiles?.email}</td>
-                  <td className="p-3">{r.profiles?.created_at?.slice(0, 10)}</td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${r._progression}%` }}
-                        />
-                      </div>
-                      <span>{r._progression}%</span>
-                    </div>
-                  </td>
-                  <td className="p-3 text-right">
-                    <div className="inline-flex items-center gap-1 relative">
-                      <ResetCarnetPanel
-                        etudiantId={r.user_id}
-                        etudiantNom={r.profiles?.full_name ?? "cet étudiant"}
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditing({
-                            user_id: r.user_id,
-                            full_name: r.profiles?.full_name,
-                            email: r.profiles?.email,
-                            role: "etudiant",
-                          });
-                          setOpen(true);
-                        }}
-                      >
-                        <Pencil size={12} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => remove(r.user_id, r.profiles?.full_name)}
-                      >
-                        <Trash2 size={12} />
-                      </Button>
-                    </div>
-                  </td>
+        <>
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-left text-xs uppercase">
+                <tr>
+                  <th className="p-3">Nom</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Inscrit le</th>
+                  <th className="p-3">Progression</th>
+                  <th className="p-3 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {pageItems.map((r) => (
+                  <tr key={r.user_id} className="relative border-t border-border">
+                    <td className="p-3">
+                      <Users size={14} className="mr-1 inline text-primary" />
+                      {r.profiles?.full_name ?? "—"}
+                    </td>
+                    <td className="p-3">{r.profiles?.email}</td>
+                    <td className="p-3">{r.profiles?.created_at?.slice(0, 10)}</td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all"
+                            style={{ width: `${r._progression}%` }}
+                          />
+                        </div>
+                        <span>{r._progression}%</span>
+                      </div>
+                    </td>
+                    <td className="p-3 text-right">
+                      <div className="inline-flex items-center gap-1 relative">
+                        <ResetCarnetPanel
+                          etudiantId={r.user_id}
+                          etudiantNom={r.profiles?.full_name ?? "cet étudiant"}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditing({
+                              user_id: r.user_id,
+                              full_name: r.profiles?.full_name,
+                              email: r.profiles?.email,
+                              role: "etudiant",
+                            });
+                            setOpen(true);
+                          }}
+                        >
+                          <Pencil size={12} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => remove(r.user_id, r.profiles?.full_name)}
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <PaginationBar
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            from={from}
+            to={to}
+            onPage={setPage}
+          />
+        </>
       )}
 
       <UserFormDialog
@@ -259,4 +273,3 @@ function Page() {
     </AssirikShell>
   );
 }
-
