@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Users, Loader2, Plus, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { fetchUsersByRole } from "@/lib/fetch-users-by-role";
 
 export const Route = createFileRoute("/_authenticated/admin/groupes")({ component: Page });
 
@@ -26,12 +27,14 @@ function Page() {
   const [picked, setPicked] = useState("");
 
   async function load() {
-    const [{ data: g }, { data: pc }, { data: st }] = await Promise.all([
+    const [{ data: g }, { data: pc }] = await Promise.all([
       supabase.from("groupes").select("id, nom, parcours_id, parcours(nom), groupe_membres(etudiant_id, profiles:etudiant_id(full_name))").order("created_at", { ascending: false }),
       supabase.from("parcours").select("id, nom").order("nom"),
-      supabase.from("profiles").select("id, full_name, user_roles!inner(role)").eq("user_roles.role", "etudiant"),
     ]);
-    setRows(g ?? []); setParcours(pc ?? []); setStudents((st as any) ?? []);
+    const st = await fetchUsersByRole("etudiant");
+    setRows(g ?? []);
+    setParcours(pc ?? []);
+    setStudents(st.map((p) => ({ id: p.id, full_name: p.full_name })));
     const m: any = {};
     (g ?? []).forEach((row: any) => { m[row.id] = (row.groupe_membres ?? []).map((mm: any) => ({ etudiant_id: mm.etudiant_id, full_name: mm.profiles?.full_name })); });
     setMembers(m);
