@@ -307,3 +307,9 @@ function CarnetPage() {
     </AssirikShell>
   );
 }
+
+// Ajoute cet import en haut
+import { RouteErrorBoundary } from "@/components/route-error-boundary";
+
+// Ajoute cette export en bas du fichier (juste avant ou après le export default)
+export const ErrorBoundary = RouteErrorBoundary;
