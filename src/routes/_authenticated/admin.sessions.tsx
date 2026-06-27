@@ -13,6 +13,7 @@ import { CalendarCheck, Loader2, Plus, X, Users } from "lucide-react";
 import { toast } from "sonner";
 import { usePaginated } from "@/hooks/use-paginated";
 import { PaginationBar } from "@/components/pagination-bar";
+import { fetchUsersByRole } from "@/lib/fetch-users-by-role";
 
 export const Route = createFileRoute("/_authenticated/admin/sessions")({ component: Page });
 
@@ -45,12 +46,15 @@ function Page() {
   }
 
   async function load() {
-    const [{ data }, { data: pc }, { data: pf }] = await Promise.all([
+    const [{ data }, { data: pc }] = await Promise.all([
       supabase.from("sessions_cours").select("*, parcours(nom), profiles:professeur_id(full_name)").order("date_session", { ascending: false }),
       supabase.from("parcours").select("id, nom").order("nom"),
-      supabase.from("profiles").select("id, full_name, user_roles!inner(role)").eq("user_roles.role", "professeur"),
     ]);
-    setRows(data ?? []); setParcours(pc ?? []); setProfs((pf as { id: string; full_name: string | null }[]) ?? []); setLoading(false);
+    const pf = await fetchUsersByRole("professeur");
+    setRows(data ?? []);
+    setParcours(pc ?? []);
+    setProfs(pf.map((p) => ({ id: p.id, full_name: p.full_name })));
+    setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
