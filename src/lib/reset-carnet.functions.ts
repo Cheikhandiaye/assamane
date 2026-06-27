@@ -9,7 +9,7 @@ const ResetCarnetSchema = z.object({
 
 export const resetCarnet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator(ResetCarnetSchema)
+  .inputValidator((input: unknown) => ResetCarnetSchema.parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"

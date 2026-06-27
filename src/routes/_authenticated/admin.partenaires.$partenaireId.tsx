@@ -121,9 +121,9 @@ function Page() {
       <div className="mb-6 rounded-2xl border border-border bg-card p-5">
         <div className="flex items-center gap-4">
           <PartnerLogo
-            logoUrl={partenaire.logo_url}
-            nom={partenaire.nom}
-            size="lg"
+            path={partenaire.logo_url}
+            alt={partenaire.nom}
+            className="h-16 w-16 rounded-xl object-cover"
           />
           <div>
             <h1 className="text-lg font-bold flex items-center gap-2">
