@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, UserPlus, X, GraduationCap, Users } from "lucide-react";
 import { toast } from "sonner";
+import { fetchUsersByRole } from "@/lib/fetch-users-by-role";
 
 type Person = { id: string; full_name: string | null; email: string | null };
 
@@ -38,15 +39,15 @@ export function ParcoursInscriptionsDialog({
     const [insE, insP, allE, allP] = await Promise.all([
       supabase.from("parcours_etudiants").select("profiles:etudiant_id(id, full_name, email)").eq("parcours_id", parcoursId),
       supabase.from("parcours_professeurs").select("profiles:professeur_id(id, full_name, email)").eq("parcours_id", parcoursId),
-      supabase.from("user_roles").select("profiles!inner(id, full_name, email)").eq("role", "etudiant"),
-      supabase.from("user_roles").select("profiles!inner(id, full_name, email)").eq("role", "professeur"),
+      fetchUsersByRole("etudiant"),
+      fetchUsersByRole("professeur"),
     ]);
     const pick = (res: any): Person[] =>
       (res.data ?? []).map((r: any) => r.profiles).filter(Boolean);
     setEtuInscrits(pick(insE));
     setProfInscrits(pick(insP));
-    setTousEtu(pick(allE));
-    setTousProf(pick(allP));
+    setTousEtu(allE as Person[]);
+    setTousProf(allP as Person[]);
     setLoading(false);
   }
 
