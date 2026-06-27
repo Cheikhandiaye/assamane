@@ -29,6 +29,7 @@ export const createUserFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Compte auth auto-validé (email_confirm + mot de passe défini) — connexion immédiate.
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
@@ -37,18 +38,28 @@ export const createUserFn = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const uid = created.user!.id;
-    // handle_new_user trigger creates profile + default 'etudiant' role; adjust both.
-    await supabaseAdmin
+
+    // Profil : upsert pour absorber le trigger handle_new_user et garantir la persistance.
+    const { error: pErr } = await supabaseAdmin
       .from("profiles")
-      .update({ full_name: data.full_name, partenaire_id: data.partenaire_id ?? null })
-      .eq("id", uid);
-    if (data.role !== "etudiant") {
-      await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
-      const { error: rErr } = await supabaseAdmin
-        .from("user_roles")
-        .insert({ user_id: uid, role: data.role as Role });
-      if (rErr) throw new Error(rErr.message);
-    }
+      .upsert(
+        {
+          id: uid,
+          email: data.email,
+          full_name: data.full_name,
+          partenaire_id: data.partenaire_id ?? null,
+        },
+        { onConflict: "id" },
+      );
+    if (pErr) throw new Error(pErr.message);
+
+    // Rôle : on remplace systématiquement le défaut posé par le trigger.
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+    const { error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: uid, role: data.role as Role });
+    if (rErr) throw new Error(rErr.message);
+
     return { id: uid };
   });
 
@@ -68,7 +79,10 @@ export const updateUserFn = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const authPatch: any = {};
-    if (data.email) authPatch.email = data.email;
+    if (data.email) {
+      authPatch.email = data.email;
+      authPatch.email_confirm = true; // garder le compte auto-validé après changement d'email
+    }
     if (data.password) authPatch.password = data.password;
     if (Object.keys(authPatch).length) {
       const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, authPatch);
