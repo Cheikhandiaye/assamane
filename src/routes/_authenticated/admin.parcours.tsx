@@ -5,8 +5,9 @@ import { AssirikShell } from "@/components/assirik-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, BookOpen, Search, Target } from "lucide-react";
+import { Plus, Pencil, Trash2, BookOpen, Search, Target, UsersRound } from "lucide-react";
 import { ParcoursFormDialog, type Parcours, type MissionOption } from "@/components/parcours-form";
+import { ParcoursInscriptionsDialog } from "@/components/parcours-inscriptions-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ function AdminParcoursPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Parcours | null>(null);
   const [deleting, setDeleting] = useState<ParcoursRow | null>(null);
+  const [managing, setManaging] = useState<ParcoursRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -139,7 +141,17 @@ function AdminParcoursPage() {
               {p.description && (
                 <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
               )}
-              <div className="mt-4 flex gap-2">
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-4 w-full"
+                onClick={() => setManaging(p)}
+              >
+                <UsersRound size={14} className="mr-1" /> Inscriptions (étudiants & formateurs)
+              </Button>
+
+              <div className="mt-2 flex gap-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -171,6 +183,13 @@ function AdminParcoursPage() {
         initial={editing}
         missions={missions}
         onSaved={load}
+      />
+
+      <ParcoursInscriptionsDialog
+        parcoursId={managing?.id ?? null}
+        parcoursNom={managing?.nom ?? ""}
+        open={!!managing}
+        onOpenChange={(o) => !o && setManaging(null)}
       />
 
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
