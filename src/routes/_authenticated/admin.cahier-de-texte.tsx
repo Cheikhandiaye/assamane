@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, FileDown } from "lucide-react";
 import { exportPDF, exportCSV } from "@/lib/exports";
+import { usePaginated } from "@/hooks/use-paginated";
+import { PaginationBar } from "@/components/pagination-bar";
 
 export const Route = createFileRoute("/_authenticated/admin/cahier-de-texte")({ component: Page });
 
@@ -13,6 +15,9 @@ function Page() {
   useRoleGuard("admin");
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { page, setPage, pageCount, pageItems, total, from, to } = usePaginated(rows, 20);
+
   useEffect(() => { (async () => {
     const { data } = await supabase.from("cahier_de_texte").select("*, parcours(nom), profiles:professeur_id(full_name), partenaires(nom)").order("date_seance", { ascending: false });
     setRows(data ?? []); setLoading(false);
@@ -42,7 +47,7 @@ function Page() {
       </div>
       {loading ? <Loader2 className="mx-auto animate-spin text-primary" /> : (
         <div className="space-y-3">
-          {rows.map((r) => (
+          {pageItems.map((r) => (
             <div key={r.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <strong>{r.date_seance} — {r.parcours?.nom}</strong>
@@ -58,6 +63,14 @@ function Page() {
               <Button asChild className="mt-4" variant="outline"><a href="/admin/sessions">Aller aux sessions</a></Button>
             </div>
           )}
+          <PaginationBar
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            from={from}
+            to={to}
+            onPage={setPage}
+          />
         </div>
       )}
     </AssirikShell>
