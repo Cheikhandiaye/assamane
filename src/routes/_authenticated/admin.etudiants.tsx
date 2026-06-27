@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { RouteErrorBoundary } from "@/components/route-error-boundary";
 import { usePaginated } from "@/hooks/use-paginated";
 import { PaginationBar } from "@/components/pagination-bar";
+import { fetchUsersByRole } from "@/lib/fetch-users-by-role";
 
 export const Route = createFileRoute("/_authenticated/admin/etudiants")({
   component: Page,
@@ -96,11 +97,8 @@ function Page() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase
-      .from("user_roles")
-      .select("user_id, profiles!inner(id, full_name, email, created_at)")
-      .eq("role", "etudiant");
-    const list = data ?? [];
+    const etudiants = await fetchUsersByRole("etudiant", true);
+    const list = etudiants.map((p) => ({ user_id: p.id, profiles: p }));
     const enriched = await Promise.all(
       list.map(async (r: any) => {
         const { data: acc } = await supabase
