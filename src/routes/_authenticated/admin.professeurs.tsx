@@ -11,6 +11,7 @@ import { exportCSV } from "@/lib/exports";
 import { UserFormDialog, type UserFormValue } from "@/components/user-form-dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { deleteUserFn } from "@/lib/admin-users.functions";
+import { fetchUsersByRole } from "@/lib/fetch-users-by-role";
 
 export const Route = createFileRoute("/_authenticated/admin/professeurs")({ component: ProfsPage });
 
