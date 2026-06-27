@@ -51,6 +51,8 @@ import { Route as AuthenticatedAdminCahierDeTexteRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminBibliothequeRouteImport } from './routes/_authenticated/admin.bibliotheque'
 import { Route as AuthenticatedAdminBadgesRouteImport } from './routes/_authenticated/admin.badges'
 import { Route as AuthenticatedProfesseurParcoursParcoursIdRouteImport } from './routes/_authenticated/professeur.parcours.$parcoursId'
+import { Route as AuthenticatedAdminPartenairesPartenaireIdRouteImport } from './routes/_authenticated/admin.partenaires.$partenaireId'
+import { Route as AuthenticatedAdminMissionsMissionIdRouteImport } from './routes/_authenticated/admin.missions.$missionId'
 import { Route as AuthenticatedProfesseurCarnetEtudiantIdParcoursIdRouteImport } from './routes/_authenticated/professeur.carnet.$etudiantId.$parcoursId'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -293,6 +295,18 @@ const AuthenticatedProfesseurParcoursParcoursIdRoute =
     path: '/$parcoursId',
     getParentRoute: () => AuthenticatedProfesseurParcoursRoute,
   } as any)
+const AuthenticatedAdminPartenairesPartenaireIdRoute =
+  AuthenticatedAdminPartenairesPartenaireIdRouteImport.update({
+    id: '/$partenaireId',
+    path: '/$partenaireId',
+    getParentRoute: () => AuthenticatedAdminPartenairesRoute,
+  } as any)
+const AuthenticatedAdminMissionsMissionIdRoute =
+  AuthenticatedAdminMissionsMissionIdRouteImport.update({
+    id: '/$missionId',
+    path: '/$missionId',
+    getParentRoute: () => AuthenticatedAdminMissionsRoute,
+  } as any)
 const AuthenticatedProfesseurCarnetEtudiantIdParcoursIdRoute =
   AuthenticatedProfesseurCarnetEtudiantIdParcoursIdRouteImport.update({
     id: '/carnet/$etudiantId/$parcoursId',
@@ -316,11 +330,11 @@ export interface FileRoutesByFullPath {
   '/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
   '/admin/groupes': typeof AuthenticatedAdminGroupesRoute
-  '/admin/missions': typeof AuthenticatedAdminMissionsRoute
+  '/admin/missions': typeof AuthenticatedAdminMissionsRouteWithChildren
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/admin/parcours': typeof AuthenticatedAdminParcoursRoute
-  '/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
+  '/admin/partenaires': typeof AuthenticatedAdminPartenairesRouteWithChildren
   '/admin/professeurs': typeof AuthenticatedAdminProfesseursRoute
   '/admin/prolongations': typeof AuthenticatedAdminProlongationsRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
@@ -341,6 +355,8 @@ export interface FileRoutesByFullPath {
   '/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
   '/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
   '/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
+  '/admin/missions/$missionId': typeof AuthenticatedAdminMissionsMissionIdRoute
+  '/admin/partenaires/$partenaireId': typeof AuthenticatedAdminPartenairesPartenaireIdRoute
   '/professeur/parcours/$parcoursId': typeof AuthenticatedProfesseurParcoursParcoursIdRoute
   '/professeur/carnet/$etudiantId/$parcoursId': typeof AuthenticatedProfesseurCarnetEtudiantIdParcoursIdRoute
 }
@@ -360,11 +376,11 @@ export interface FileRoutesByTo {
   '/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
   '/admin/groupes': typeof AuthenticatedAdminGroupesRoute
-  '/admin/missions': typeof AuthenticatedAdminMissionsRoute
+  '/admin/missions': typeof AuthenticatedAdminMissionsRouteWithChildren
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/admin/parcours': typeof AuthenticatedAdminParcoursRoute
-  '/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
+  '/admin/partenaires': typeof AuthenticatedAdminPartenairesRouteWithChildren
   '/admin/professeurs': typeof AuthenticatedAdminProfesseursRoute
   '/admin/prolongations': typeof AuthenticatedAdminProlongationsRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
@@ -385,6 +401,8 @@ export interface FileRoutesByTo {
   '/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
   '/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
   '/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
+  '/admin/missions/$missionId': typeof AuthenticatedAdminMissionsMissionIdRoute
+  '/admin/partenaires/$partenaireId': typeof AuthenticatedAdminPartenairesPartenaireIdRoute
   '/professeur/parcours/$parcoursId': typeof AuthenticatedProfesseurParcoursParcoursIdRoute
   '/professeur/carnet/$etudiantId/$parcoursId': typeof AuthenticatedProfesseurCarnetEtudiantIdParcoursIdRoute
 }
@@ -406,11 +424,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/cahier-de-texte': typeof AuthenticatedAdminCahierDeTexteRoute
   '/_authenticated/admin/etudiants': typeof AuthenticatedAdminEtudiantsRoute
   '/_authenticated/admin/groupes': typeof AuthenticatedAdminGroupesRoute
-  '/_authenticated/admin/missions': typeof AuthenticatedAdminMissionsRoute
+  '/_authenticated/admin/missions': typeof AuthenticatedAdminMissionsRouteWithChildren
   '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/_authenticated/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/_authenticated/admin/parcours': typeof AuthenticatedAdminParcoursRoute
-  '/_authenticated/admin/partenaires': typeof AuthenticatedAdminPartenairesRoute
+  '/_authenticated/admin/partenaires': typeof AuthenticatedAdminPartenairesRouteWithChildren
   '/_authenticated/admin/professeurs': typeof AuthenticatedAdminProfesseursRoute
   '/_authenticated/admin/prolongations': typeof AuthenticatedAdminProlongationsRoute
   '/_authenticated/admin/sessions': typeof AuthenticatedAdminSessionsRoute
@@ -431,6 +449,8 @@ export interface FileRoutesById {
   '/_authenticated/professeur/partenaires': typeof AuthenticatedProfesseurPartenairesRoute
   '/_authenticated/professeur/prolongations': typeof AuthenticatedProfesseurProlongationsRoute
   '/_authenticated/professeur/validations': typeof AuthenticatedProfesseurValidationsRoute
+  '/_authenticated/admin/missions/$missionId': typeof AuthenticatedAdminMissionsMissionIdRoute
+  '/_authenticated/admin/partenaires/$partenaireId': typeof AuthenticatedAdminPartenairesPartenaireIdRoute
   '/_authenticated/professeur/parcours/$parcoursId': typeof AuthenticatedProfesseurParcoursParcoursIdRoute
   '/_authenticated/professeur/carnet/$etudiantId/$parcoursId': typeof AuthenticatedProfesseurCarnetEtudiantIdParcoursIdRoute
 }
@@ -477,6 +497,8 @@ export interface FileRouteTypes {
     | '/professeur/partenaires'
     | '/professeur/prolongations'
     | '/professeur/validations'
+    | '/admin/missions/$missionId'
+    | '/admin/partenaires/$partenaireId'
     | '/professeur/parcours/$parcoursId'
     | '/professeur/carnet/$etudiantId/$parcoursId'
   fileRoutesByTo: FileRoutesByTo
@@ -521,6 +543,8 @@ export interface FileRouteTypes {
     | '/professeur/partenaires'
     | '/professeur/prolongations'
     | '/professeur/validations'
+    | '/admin/missions/$missionId'
+    | '/admin/partenaires/$partenaireId'
     | '/professeur/parcours/$parcoursId'
     | '/professeur/carnet/$etudiantId/$parcoursId'
   id:
@@ -566,6 +590,8 @@ export interface FileRouteTypes {
     | '/_authenticated/professeur/partenaires'
     | '/_authenticated/professeur/prolongations'
     | '/_authenticated/professeur/validations'
+    | '/_authenticated/admin/missions/$missionId'
+    | '/_authenticated/admin/partenaires/$partenaireId'
     | '/_authenticated/professeur/parcours/$parcoursId'
     | '/_authenticated/professeur/carnet/$etudiantId/$parcoursId'
   fileRoutesById: FileRoutesById
@@ -873,6 +899,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfesseurParcoursParcoursIdRouteImport
       parentRoute: typeof AuthenticatedProfesseurParcoursRoute
     }
+    '/_authenticated/admin/partenaires/$partenaireId': {
+      id: '/_authenticated/admin/partenaires/$partenaireId'
+      path: '/$partenaireId'
+      fullPath: '/admin/partenaires/$partenaireId'
+      preLoaderRoute: typeof AuthenticatedAdminPartenairesPartenaireIdRouteImport
+      parentRoute: typeof AuthenticatedAdminPartenairesRoute
+    }
+    '/_authenticated/admin/missions/$missionId': {
+      id: '/_authenticated/admin/missions/$missionId'
+      path: '/$missionId'
+      fullPath: '/admin/missions/$missionId'
+      preLoaderRoute: typeof AuthenticatedAdminMissionsMissionIdRouteImport
+      parentRoute: typeof AuthenticatedAdminMissionsRoute
+    }
     '/_authenticated/professeur/carnet/$etudiantId/$parcoursId': {
       id: '/_authenticated/professeur/carnet/$etudiantId/$parcoursId'
       path: '/carnet/$etudiantId/$parcoursId'
@@ -883,17 +923,47 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminMissionsRouteChildren {
+  AuthenticatedAdminMissionsMissionIdRoute: typeof AuthenticatedAdminMissionsMissionIdRoute
+}
+
+const AuthenticatedAdminMissionsRouteChildren: AuthenticatedAdminMissionsRouteChildren =
+  {
+    AuthenticatedAdminMissionsMissionIdRoute:
+      AuthenticatedAdminMissionsMissionIdRoute,
+  }
+
+const AuthenticatedAdminMissionsRouteWithChildren =
+  AuthenticatedAdminMissionsRoute._addFileChildren(
+    AuthenticatedAdminMissionsRouteChildren,
+  )
+
+interface AuthenticatedAdminPartenairesRouteChildren {
+  AuthenticatedAdminPartenairesPartenaireIdRoute: typeof AuthenticatedAdminPartenairesPartenaireIdRoute
+}
+
+const AuthenticatedAdminPartenairesRouteChildren: AuthenticatedAdminPartenairesRouteChildren =
+  {
+    AuthenticatedAdminPartenairesPartenaireIdRoute:
+      AuthenticatedAdminPartenairesPartenaireIdRoute,
+  }
+
+const AuthenticatedAdminPartenairesRouteWithChildren =
+  AuthenticatedAdminPartenairesRoute._addFileChildren(
+    AuthenticatedAdminPartenairesRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBadgesRoute: typeof AuthenticatedAdminBadgesRoute
   AuthenticatedAdminBibliothequeRoute: typeof AuthenticatedAdminBibliothequeRoute
   AuthenticatedAdminCahierDeTexteRoute: typeof AuthenticatedAdminCahierDeTexteRoute
   AuthenticatedAdminEtudiantsRoute: typeof AuthenticatedAdminEtudiantsRoute
   AuthenticatedAdminGroupesRoute: typeof AuthenticatedAdminGroupesRoute
-  AuthenticatedAdminMissionsRoute: typeof AuthenticatedAdminMissionsRoute
+  AuthenticatedAdminMissionsRoute: typeof AuthenticatedAdminMissionsRouteWithChildren
   AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
   AuthenticatedAdminParametresRoute: typeof AuthenticatedAdminParametresRoute
   AuthenticatedAdminParcoursRoute: typeof AuthenticatedAdminParcoursRoute
-  AuthenticatedAdminPartenairesRoute: typeof AuthenticatedAdminPartenairesRoute
+  AuthenticatedAdminPartenairesRoute: typeof AuthenticatedAdminPartenairesRouteWithChildren
   AuthenticatedAdminProfesseursRoute: typeof AuthenticatedAdminProfesseursRoute
   AuthenticatedAdminProlongationsRoute: typeof AuthenticatedAdminProlongationsRoute
   AuthenticatedAdminSessionsRoute: typeof AuthenticatedAdminSessionsRoute
@@ -906,11 +976,12 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCahierDeTexteRoute: AuthenticatedAdminCahierDeTexteRoute,
   AuthenticatedAdminEtudiantsRoute: AuthenticatedAdminEtudiantsRoute,
   AuthenticatedAdminGroupesRoute: AuthenticatedAdminGroupesRoute,
-  AuthenticatedAdminMissionsRoute: AuthenticatedAdminMissionsRoute,
+  AuthenticatedAdminMissionsRoute: AuthenticatedAdminMissionsRouteWithChildren,
   AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
   AuthenticatedAdminParametresRoute: AuthenticatedAdminParametresRoute,
   AuthenticatedAdminParcoursRoute: AuthenticatedAdminParcoursRoute,
-  AuthenticatedAdminPartenairesRoute: AuthenticatedAdminPartenairesRoute,
+  AuthenticatedAdminPartenairesRoute:
+    AuthenticatedAdminPartenairesRouteWithChildren,
   AuthenticatedAdminProfesseursRoute: AuthenticatedAdminProfesseursRoute,
   AuthenticatedAdminProlongationsRoute: AuthenticatedAdminProlongationsRoute,
   AuthenticatedAdminSessionsRoute: AuthenticatedAdminSessionsRoute,
@@ -1052,3 +1123,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
