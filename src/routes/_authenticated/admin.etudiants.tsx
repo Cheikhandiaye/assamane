@@ -5,7 +5,7 @@ import { useRoleGuard } from "@/hooks/use-role-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Users, Loader2, Pencil, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, Loader2, Pencil, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import { exportCSV } from "@/lib/exports";
 import { UserFormDialog, type UserFormValue } from "@/components/user-form-dialog";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,6 +16,7 @@ import { RouteErrorBoundary } from "@/components/route-error-boundary";
 import { usePaginated } from "@/hooks/use-paginated";
 import { PaginationBar } from "@/components/pagination-bar";
 import { fetchUsersByRole } from "@/lib/fetch-users-by-role";
+import { EtudiantParcoursDialog } from "@/components/etudiant-parcours-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/etudiants")({
   component: Page,
@@ -93,6 +94,7 @@ function Page() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<UserFormValue | null>(null);
+  const [managingParcours, setManagingParcours] = useState<{ id: string; nom: string } | null>(null);
   const delU = useServerFn(deleteUserFn);
 
   async function load() {
@@ -216,6 +218,15 @@ function Page() {
                     </td>
                     <td className="p-3 text-right">
                       <div className="inline-flex items-center gap-1 relative">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-primary"
+                          title="Inscrire aux parcours de son partenaire"
+                          onClick={() => setManagingParcours({ id: r.user_id, nom: r.profiles?.full_name ?? "cet étudiant" })}
+                        >
+                          <BookOpen size={12} />
+                        </Button>
                         <ResetCarnetPanel
                           etudiantId={r.user_id}
                           etudiantNom={r.profiles?.full_name ?? "cet étudiant"}
@@ -267,6 +278,13 @@ function Page() {
         initial={editing}
         defaultRole="etudiant"
         onSaved={load}
+      />
+
+      <EtudiantParcoursDialog
+        etudiantId={managingParcours?.id ?? ""}
+        etudiantNom={managingParcours?.nom ?? ""}
+        open={!!managingParcours}
+        onOpenChange={(o) => !o && setManagingParcours(null)}
       />
     </AssirikShell>
   );
