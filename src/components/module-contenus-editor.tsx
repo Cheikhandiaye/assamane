@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, ChevronUp, ChevronDown, FileText, Video, Save, HelpCircle, Check } from "lucide-react";
+import { Loader2, Plus, Trash2, ChevronUp, ChevronDown, FileText, Video, Save, HelpCircle, Check, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 type QuizQuestion = { question: string; options: string[]; correct: number };
@@ -24,6 +24,47 @@ type Contenu = {
   ordre: number;
 };
 
+// ─── Parseur CSV robuste (guillemets, virgules internes, CRLF, BOM) ───
+function parseCSV(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  const t = text.replace(/^\uFEFF/, "");
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (t[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += ch;
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === ",") { row.push(field); field = ""; }
+      else if (ch === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+      else if (ch === "\r") { /* ignore */ }
+      else field += ch;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter((r) => r.some((c) => c.trim() !== ""));
+}
+
+function downloadTemplate() {
+  const lines = [
+    "question,reponse_1,reponse_2,reponse_3,reponse_4,bonne_reponse",
+    '"Quelle est la capitale du Sénégal ?",Dakar,Thiès,Saint-Louis,Ziguinchor,1',
+    '"Combien font 2 + 2 ?",3,4,5,,2',
+  ];
+  const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "template-quiz.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function ModuleContenusEditor({
   moduleId,
   moduleTitre,
@@ -40,6 +81,7 @@ export function ModuleContenusEditor({
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Contenu[]>([]);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   async function load() {
     if (!moduleId) return;
@@ -111,6 +153,31 @@ export function ModuleContenusEditor({
     if (correct >= opts.length) correct = Math.max(0, opts.length - 1);
     qs[qi] = { ...qs[qi], options: opts, correct };
     setQuestions(c.id, qs);
+  }
+
+  async function importCSV(c: Contenu, file: File) {
+    const text = await file.text();
+    const rows = parseCSV(text);
+    if (!rows.length) return toast.error("Fichier vide.");
+    const start = (rows[0][0] ?? "").toLowerCase().includes("question") ? 1 : 0;
+    const imported: QuizQuestion[] = [];
+    let ignored = 0;
+    for (let i = start; i < rows.length; i++) {
+      const r = rows[i];
+      const question = (r[0] ?? "").trim();
+      const raw = [r[1], r[2], r[3], r[4]].map((s) => (s ?? "").trim());
+      const correctCol = parseInt((r[5] ?? "").trim(), 10) - 1;
+      const options = raw.filter(Boolean);
+      if (!question || options.length < 2 || isNaN(correctCol) || correctCol < 0 || correctCol > 3 || !raw[correctCol]) {
+        ignored++;
+        continue;
+      }
+      const correct = raw.slice(0, correctCol).filter(Boolean).length;
+      imported.push({ question, options, correct });
+    }
+    if (!imported.length) return toast.error("Aucune question valide. Vérifie le template (colonne bonne_reponse = numéro 1 à 4).");
+    setQuestions(c.id, [...(c.quiz_questions ?? []), ...imported]);
+    toast.success(`${imported.length} question(s) importée(s)${ignored ? ` · ${ignored} ligne(s) ignorée(s)` : ""}. Clique « Enregistrer ce bloc » pour sauvegarder.`);
   }
 
   async function saveBlock(c: Contenu) {
@@ -219,9 +286,30 @@ export function ModuleContenusEditor({
 
                   {c.type === "quiz" && (
                     <div className="space-y-3">
-                      <div className="w-40">
-                        <Label className="text-xs">Seuil de réussite (%)</Label>
-                        <Input type="number" min={0} max={100} value={c.quiz_score_min ?? 70} onChange={(e) => patch(c.id, { quiz_score_min: parseInt(e.target.value) || 0 })} />
+                      <div className="flex flex-wrap items-end gap-3">
+                        <div className="w-40">
+                          <Label className="text-xs">Seuil de réussite (%)</Label>
+                          <Input type="number" min={0} max={100} value={c.quiz_score_min ?? 70} onChange={(e) => patch(c.id, { quiz_score_min: parseInt(e.target.value) || 0 })} />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={downloadTemplate}>
+                            <Download size={13} className="mr-1" />Template CSV
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => fileInputs.current[c.id]?.click()}>
+                            <Upload size={13} className="mr-1" />Importer un CSV
+                          </Button>
+                          <input
+                            ref={(el) => { fileInputs.current[c.id] = el; }}
+                            type="file"
+                            accept=".csv,text/csv"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) importCSV(c, f);
+                              e.target.value = "";
+                            }}
+                          />
+                        </div>
                       </div>
 
                       {(c.quiz_questions ?? []).map((q, qi) => (
@@ -252,7 +340,7 @@ export function ModuleContenusEditor({
                       ))}
 
                       <Button size="sm" variant="outline" onClick={() => addQuestion(c)}><Plus size={13} className="mr-1" />Ajouter une question</Button>
-                      <p className="text-xs text-muted-foreground">Le cercle vert = la bonne réponse. Minimum 2 réponses par question.</p>
+                      <p className="text-xs text-muted-foreground">Cercle vert = bonne réponse. Min. 2 réponses. L'import CSV ajoute aux questions existantes.</p>
                     </div>
                   )}
 
