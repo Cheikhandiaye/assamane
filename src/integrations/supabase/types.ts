@@ -324,6 +324,8 @@ export type Database = {
           id: string
           module_id: string | null
           ordre: number
+          quiz_questions: Json
+          quiz_score_min: number
           titre: string | null
           type: string
           video_platform: string | null
@@ -336,6 +338,8 @@ export type Database = {
           id?: string
           module_id?: string | null
           ordre: number
+          quiz_questions?: Json
+          quiz_score_min?: number
           titre?: string | null
           type: string
           video_platform?: string | null
@@ -348,6 +352,8 @@ export type Database = {
           id?: string
           module_id?: string | null
           ordre?: number
+          quiz_questions?: Json
+          quiz_score_min?: number
           titre?: string | null
           type?: string
           video_platform?: string | null
@@ -613,6 +619,7 @@ export type Database = {
       }
       modules_cours: {
         Row: {
+          categorie: string | null
           created_at: string | null
           created_by: string | null
           description: string | null
@@ -624,6 +631,7 @@ export type Database = {
           titre: string
         }
         Insert: {
+          categorie?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
@@ -635,6 +643,7 @@ export type Database = {
           titre: string
         }
         Update: {
+          categorie?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
@@ -1310,6 +1319,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_prof_enroll: {
+        Args: { _etudiant_id: string; _parcours_id: string }
+        Returns: boolean
+      }
       can_view_partenaire: {
         Args: { _partenaire_id: string }
         Returns: boolean
