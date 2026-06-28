@@ -23,7 +23,6 @@ import {
   Bell,
   Award,
   Megaphone,
-  Megaphone,
   Lightbulb,
   type LucideIcon,
 } from "lucide-react";
