@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
-import { Lock, Video, NotebookPen, Clock, CheckCircle, CalendarPlus } from "lucide-react";
+import { Lock, Video, NotebookPen, Clock, CheckCircle, CalendarPlus, Award, Loader2 } from "lucide-react";
 import { useRoleGuard } from "@/hooks/use-role-guard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { fetchAttestationStatus, buildAttestation, downloadAttestationPDF, type AttestationStatus } from "@/lib/attestation";
 
 export const Route = createFileRoute("/_authenticated/etudiant/parcours")({
   component: ParcoursPage,
@@ -38,6 +39,8 @@ function ParcoursPage() {
   const [actifs, setActifs] = useState<ParcoursActif[]>([]);
   const [dialog, setDialog] = useState<ParcoursActif | null>(null);
   const [form, setForm] = useState({ date_souhaitee: "", justification: "" });
+  const [attest, setAttest] = useState<Record<string, AttestationStatus>>({});
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -71,6 +74,31 @@ function ParcoursPage() {
     })();
   }, [user]);
 
+  // Statut d'attestation pour chaque parcours actif
+  useEffect(() => {
+    if (!user || actifs.length === 0) return;
+    (async () => {
+      const entries = await Promise.all(
+        actifs.map(async (p) => [p.parcours_id, await fetchAttestationStatus(user.id, p.parcours_id)] as const),
+      );
+      setAttest(Object.fromEntries(entries));
+    })();
+  }, [user, actifs]);
+
+  async function downloadAttest(parcoursId: string) {
+    if (!user) return;
+    setDownloading(parcoursId);
+    try {
+      const data = await buildAttestation(user.id, parcoursId);
+      if (!data) { toast.error("Attestation non disponible."); return; }
+      downloadAttestationPDF(data);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur lors de la génération.");
+    } finally {
+      setDownloading(null);
+    }
+  }
+
   async function submitExtension() {
     if (!user || !dialog) return;
     if (!form.date_souhaitee || !form.justification) { toast.error("Tous les champs sont requis"); return; }
@@ -96,18 +124,31 @@ function ParcoursPage() {
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Parcours actifs</h2>
           {actifs.map((p) => {
             const days = p.date_fin ? Math.ceil((new Date(p.date_fin).getTime() - Date.now()) / 86400000) : null;
+            const st = attest[p.parcours_id];
             return (
               <div key={p.parcours_id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
                 <div>
                   <p className="font-semibold">{p.nom}</p>
                   <p className="text-xs text-muted-foreground">{p.date_fin ? `Fin : ${p.date_fin} · ${days} j restants` : "Pas de date de fin"}</p>
                 </div>
-                {days !== null && days < 7 && (
-                  <Button size="sm" variant="outline" onClick={() => { setDialog(p); setForm({ date_souhaitee: "", justification: "" }); }}>
-                    <CalendarPlus size={14} className="mr-1" />Demander une prolongation
-                  </Button>
-                )}
-                {days !== null && days < 7 && <Badge variant="destructive" className="ml-auto">{days <= 0 ? "Échue" : `${days}j`}</Badge>}
+
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                  {st?.complete && st.within_deadline && (
+                    <Button size="sm" onClick={() => downloadAttest(p.parcours_id)} disabled={downloading === p.parcours_id}>
+                      {downloading === p.parcours_id ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Award size={14} className="mr-1" />}
+                      Télécharger l'attestation
+                    </Button>
+                  )}
+                  {st?.complete && !st.within_deadline && (
+                    <Badge variant="secondary">Terminé hors délai</Badge>
+                  )}
+                  {days !== null && days < 7 && !st?.complete && (
+                    <Button size="sm" variant="outline" onClick={() => { setDialog(p); setForm({ date_souhaitee: "", justification: "" }); }}>
+                      <CalendarPlus size={14} className="mr-1" />Demander une prolongation
+                    </Button>
+                  )}
+                  {days !== null && days < 7 && !st?.complete && <Badge variant="destructive">{days <= 0 ? "Échue" : `${days}j`}</Badge>}
+                </div>
               </div>
             );
           })}
