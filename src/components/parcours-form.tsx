@@ -15,6 +15,7 @@ export interface Parcours {
   mission_id: string | null;
   pondere_individuel: number | null;
   pondere_groupe: number | null;
+  date_fin?: string | null;
 }
 
 export interface MissionOption {
@@ -36,6 +37,7 @@ const EMPTY = {
   mission_id: "",
   pondere_individuel: 60,
   pondere_groupe: 40,
+  date_fin: "",
 };
 
 export function ParcoursFormDialog({ open, onOpenChange, initial, missions, onSaved }: Props) {
@@ -43,18 +45,25 @@ export function ParcoursFormDialog({ open, onOpenChange, initial, missions, onSa
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setForm(
-        initial
-          ? {
-              nom: initial.nom,
-              description: initial.description ?? "",
-              mission_id: initial.mission_id ?? "",
-              pondere_individuel: Number(initial.pondere_individuel ?? 60),
-              pondere_groupe: Number(initial.pondere_groupe ?? 40),
-            }
-          : EMPTY,
-      );
+    if (!open) return;
+    if (initial) {
+      setForm({
+        nom: initial.nom,
+        description: initial.description ?? "",
+        mission_id: initial.mission_id ?? "",
+        pondere_individuel: Number(initial.pondere_individuel ?? 60),
+        pondere_groupe: Number(initial.pondere_groupe ?? 40),
+        date_fin: "",
+      });
+      // Charge la date de fin propre du parcours depuis la base
+      supabase
+        .from("parcours")
+        .select("date_fin")
+        .eq("id", initial.id)
+        .maybeSingle()
+        .then(({ data }) => setForm((f) => ({ ...f, date_fin: data?.date_fin ?? "" })));
+    } else {
+      setForm(EMPTY);
     }
   }, [open, initial]);
 
@@ -76,6 +85,7 @@ export function ParcoursFormDialog({ open, onOpenChange, initial, missions, onSa
       mission_id: form.mission_id,
       pondere_individuel: form.pondere_individuel,
       pondere_groupe: form.pondere_groupe,
+      date_fin: form.date_fin || null,
     };
     const { error } = initial
       ? await supabase.from("parcours").update(payload).eq("id", initial.id)
@@ -119,6 +129,11 @@ export function ParcoursFormDialog({ open, onOpenChange, initial, missions, onSa
           <div className="space-y-2">
             <Label htmlFor="desc">Description</Label>
             <Textarea id="desc" rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="datefin">Date de fin du parcours</Label>
+            <Input id="datefin" type="date" value={form.date_fin} onChange={(e) => setForm((f) => ({ ...f, date_fin: e.target.value }))} />
+            <p className="text-xs text-muted-foreground">Si vide, la date de fin de la mission s'applique. Sert de délai pour l'attestation de réussite.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
