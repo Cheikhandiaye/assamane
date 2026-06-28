@@ -5,9 +5,10 @@ import { AssirikShell } from "@/components/assirik-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, BookOpen, Search, Target, UsersRound } from "lucide-react";
+import { Plus, Pencil, Trash2, BookOpen, Search, Target, UsersRound, Layers } from "lucide-react";
 import { ParcoursFormDialog, type Parcours, type MissionOption } from "@/components/parcours-form";
 import { ParcoursInscriptionsDialog } from "@/components/parcours-inscriptions-dialog";
+import { ParcoursModulesDialog } from "@/components/parcours-modules-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,7 @@ function AdminParcoursPage() {
   const [editing, setEditing] = useState<Parcours | null>(null);
   const [deleting, setDeleting] = useState<ParcoursRow | null>(null);
   const [managing, setManaging] = useState<ParcoursRow | null>(null);
+  const [managingModules, setManagingModules] = useState<ParcoursRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -145,7 +147,16 @@ function AdminParcoursPage() {
               <Button
                 size="sm"
                 variant="outline"
-                className="mt-4 w-full"
+                className="mt-4 w-full text-primary"
+                onClick={() => setManagingModules(p)}
+              >
+                <Layers size={14} className="mr-1" /> Modules du parcours
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 w-full"
                 onClick={() => setManaging(p)}
               >
                 <UsersRound size={14} className="mr-1" /> Inscriptions (étudiants & formateurs)
@@ -190,6 +201,14 @@ function AdminParcoursPage() {
         parcoursNom={managing?.nom ?? ""}
         open={!!managing}
         onOpenChange={(o) => !o && setManaging(null)}
+      />
+
+      <ParcoursModulesDialog
+        parcoursId={managingModules?.id ?? null}
+        parcoursNom={managingModules?.nom ?? ""}
+        open={!!managingModules}
+        onOpenChange={(o) => !o && setManagingModules(null)}
+        onChanged={load}
       />
 
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
