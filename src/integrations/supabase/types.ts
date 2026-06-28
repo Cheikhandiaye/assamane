@@ -723,6 +723,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          date_fin: string | null
           description: string | null
           duplique_depuis: string | null
           id: string
@@ -734,6 +735,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          date_fin?: string | null
           description?: string | null
           duplique_depuis?: string | null
           id?: string
@@ -745,6 +747,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
+          date_fin?: string | null
           description?: string | null
           duplique_depuis?: string | null
           id?: string
@@ -1331,6 +1334,19 @@ export type Database = {
       fn_check_badges: {
         Args: { p_etudiant_id: string; p_parcours_id: string }
         Returns: undefined
+      }
+      fn_clone_module_to_parcours: {
+        Args: { _module_id: string; _parcours_id: string }
+        Returns: string
+      }
+      fn_parcours_attestation: {
+        Args: { _etudiant_id: string; _parcours_id: string }
+        Returns: {
+          complete: boolean
+          completed_at: string
+          deadline: string
+          within_deadline: boolean
+        }[]
       }
       has_role: {
         Args: {
