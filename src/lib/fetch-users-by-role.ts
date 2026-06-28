@@ -20,7 +20,10 @@ export async function fetchUsersByRole(
   const ids = (roles ?? []).map((r) => r.user_id);
   if (!ids.length) return [];
   const cols = withCreatedAt ? "id, full_name, email, created_at" : "id, full_name, email";
-  const { data: profs } = await supabase.from("profiles").select(cols).in("id", ids);
+  const { data: profs } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, created_at")
+    .in("id", ids);
   return (profs ?? []) as RoleUser[];
 }
 

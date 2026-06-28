@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Trash2, Lightbulb, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 type Priorite = "haute" | "moyenne" | "basse" | "idee";
 type Statut = "a_faire" | "en_cours" | "fait";
@@ -76,7 +77,7 @@ function Page() {
     setItems(next);
     setSaving(true);
     const { error } = await supabase.from("app_settings").upsert(
-      { key: SETTINGS_KEY, value: { items: next }, updated_at: new Date().toISOString() },
+      { key: SETTINGS_KEY, value: { items: next as unknown as Json }, updated_at: new Date().toISOString() },
       { onConflict: "key" },
     );
     setSaving(false);
