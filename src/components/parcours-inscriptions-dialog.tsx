@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, UserPlus, X, GraduationCap, Users } from "lucide-react";
 import { toast } from "sonner";
-import { fetchUsersByRole } from "@/lib/fetch-users-by-role";
+import { fetchUsersByRole, fetchStudentsByPartner } from "@/lib/fetch-users-by-role";
 
 type Person = { id: string; full_name: string | null; email: string | null };
 
@@ -26,6 +26,7 @@ export function ParcoursInscriptionsDialog({
 }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [hasPartner, setHasPartner] = useState(true);
   const [etuInscrits, setEtuInscrits] = useState<Person[]>([]);
   const [profInscrits, setProfInscrits] = useState<Person[]>([]);
   const [tousEtu, setTousEtu] = useState<Person[]>([]);
@@ -36,18 +37,29 @@ export function ParcoursInscriptionsDialog({
   async function load() {
     if (!parcoursId) return;
     setLoading(true);
-    const [insE, insP, allE, allP] = await Promise.all([
+
+    // Partenaire du parcours (via sa mission)
+    const { data: pcRow } = await supabase
+      .from("parcours")
+      .select("missions:mission_id(partenaire_id)")
+      .eq("id", parcoursId)
+      .maybeSingle();
+    const partId = (pcRow as any)?.missions?.partenaire_id ?? null;
+    setHasPartner(!!partId);
+
+    const [insE, insP, allP, allE] = await Promise.all([
       supabase.from("parcours_etudiants").select("profiles:etudiant_id(id, full_name, email)").eq("parcours_id", parcoursId),
       supabase.from("parcours_professeurs").select("profiles:professeur_id(id, full_name, email)").eq("parcours_id", parcoursId),
-      fetchUsersByRole("etudiant"),
       fetchUsersByRole("professeur"),
+      partId ? fetchStudentsByPartner(partId) : fetchUsersByRole("etudiant"),
     ]);
+
     const pick = (res: any): Person[] =>
       (res.data ?? []).map((r: any) => r.profiles).filter(Boolean);
     setEtuInscrits(pick(insE));
     setProfInscrits(pick(insP));
-    setTousEtu(allE as Person[]);
     setTousProf(allP as Person[]);
+    setTousEtu(allE as Person[]);
     setLoading(false);
   }
 
@@ -122,10 +134,16 @@ export function ParcoursInscriptionsDialog({
                 Étudiants <span className="text-muted-foreground">({etuInscrits.length})</span>
               </h3>
 
+              {!hasPartner && (
+                <p className="mb-2 text-xs text-amber-600">
+                  Ce parcours n'est rattaché à aucun partenaire : tous les étudiants sont proposés.
+                </p>
+              )}
+
               <div className="mb-3 flex gap-2">
                 <Select value={selEtu} onValueChange={setSelEtu}>
                   <SelectTrigger className="flex-1">
-                    <SelectValue placeholder={dispoEtu.length ? "Ajouter un étudiant…" : "Tous déjà inscrits"} />
+                    <SelectValue placeholder={dispoEtu.length ? "Ajouter un étudiant…" : "Aucun étudiant disponible"} />
                   </SelectTrigger>
                   <SelectContent>
                     {dispoEtu.map((p) => (
