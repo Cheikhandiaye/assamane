@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -119,7 +119,11 @@ function ParcoursPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {modules.map((m) => <ModuleCard key={m.id} module={m} />)}
+          {modules.map((m) => (
+            <Link key={m.id} to="/etudiant/module/$moduleId" params={{ moduleId: m.id }} className="block transition hover:opacity-90">
+              <ModuleCard module={m} />
+            </Link>
+          ))}
         </div>
       )}
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
