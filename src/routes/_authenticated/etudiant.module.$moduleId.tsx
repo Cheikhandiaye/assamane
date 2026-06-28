@@ -43,7 +43,7 @@ function Page() {
       .select("contenu_id, complete")
       .eq("etudiant_id", user.id)
       .eq("module_id", moduleId);
-    setDoneIds(new Set((sv ?? []).filter((s) => s.complete).map((s) => s.contenu_id)));
+    setDoneIds(new Set((sv ?? []).filter((s) => s.complete && s.contenu_id).map((s) => s.contenu_id as string)));
     setLoading(false);
   }
 
