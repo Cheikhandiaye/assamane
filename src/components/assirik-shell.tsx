@@ -66,6 +66,7 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
     { label: "Notifications", to: "/admin/notifications", icon: Megaphone },
     { label: "Validations", to: "/admin/validations", icon: CheckSquare },
     { label: "Prolongations", to: "/admin/prolongations", icon: Clock },
+    { label: "Notes d'évolution", to: "/admin/evolutions", icon: Lightbulb },
     { label: "Paramètres", to: "/admin/parametres", icon: Settings },
   ],
   professeur: [
