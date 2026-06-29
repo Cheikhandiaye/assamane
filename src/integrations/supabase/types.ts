@@ -1598,6 +1598,18 @@ export type Database = {
         Returns: boolean
       }
       can_view_profile: { Args: { _target: string }; Returns: boolean }
+      create_partenaire: {
+        Args: {
+          p_adresse?: string
+          p_contact_email?: string
+          p_couleur_primaire?: string
+          p_couleur_secondaire?: string
+          p_logo_url?: string
+          p_nom: string
+        }
+        Returns: string
+      }
+      delete_partenaire: { Args: { p_id: string }; Returns: boolean }
       fn_calcul_note_finale_module: {
         Args: {
           p_etudiant_id: string
@@ -1623,6 +1635,46 @@ export type Database = {
           within_deadline: boolean
         }[]
       }
+      get_all_partenaires: {
+        Args: never
+        Returns: {
+          adresse: string | null
+          contact_email: string | null
+          couleur_primaire: string | null
+          couleur_secondaire: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          logo_url: string | null
+          nom: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "partenaires"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_partenaire_by_id: {
+        Args: { p_id: string }
+        Returns: {
+          adresse: string | null
+          contact_email: string | null
+          couleur_primaire: string | null
+          couleur_secondaire: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          logo_url: string | null
+          nom: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "partenaires"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1640,6 +1692,18 @@ export type Database = {
       is_student_of_mission: { Args: { _mission_id: string }; Returns: boolean }
       is_student_of_parcours: {
         Args: { _parcours_id: string }
+        Returns: boolean
+      }
+      update_partenaire: {
+        Args: {
+          p_adresse?: string
+          p_contact_email?: string
+          p_couleur_primaire?: string
+          p_couleur_secondaire?: string
+          p_id: string
+          p_logo_url?: string
+          p_nom?: string
+        }
         Returns: boolean
       }
     }
