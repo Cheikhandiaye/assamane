@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
-import { Lock, Video, NotebookPen, Clock, CheckCircle, CalendarPlus, Award, Loader2 } from "lucide-react";
+import { Lock, Video, NotebookPen, Clock, CheckCircle, CalendarPlus, Award, Loader2, AlertCircle } from "lucide-react";
 import { useRoleGuard } from "@/hooks/use-role-guard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { fetchAttestationStatus, buildAttestation, downloadAttestationPDF, type AttestationStatus } from "@/lib/attestation";
+import { generateAttestation } from "@/lib/attestation";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_authenticated/etudiant/parcours")({
   component: ParcoursPage,
@@ -31,6 +33,24 @@ interface ModuleRow {
 
 interface ParcoursActif { parcours_id: string; nom: string; mission_id: string | null; date_fin: string | null; }
 
+// Interface pour les données d'attestation
+interface AttestationData {
+  parcours_titre: string;
+  complete: boolean;
+  eligible: boolean;
+  note_moyenne: number;
+  modules_valides: number;
+  modules_total: number;
+  taux_reussite: number;
+  modules_echoues: any[];
+  modules_a_reprendre: any[];
+  seuil_requis: number;
+  message: string;
+  peut_telecharger: boolean;
+  peut_refaire_modules: boolean;
+  date_generation: string;
+}
+
 function ParcoursPage() {
   useRoleGuard("etudiant");
   const { user } = useCurrentUser();
@@ -39,8 +59,9 @@ function ParcoursPage() {
   const [actifs, setActifs] = useState<ParcoursActif[]>([]);
   const [dialog, setDialog] = useState<ParcoursActif | null>(null);
   const [form, setForm] = useState({ date_souhaitee: "", justification: "" });
-  const [attest, setAttest] = useState<Record<string, AttestationStatus>>({});
+  const [attestData, setAttestData] = useState<Record<string, AttestationData>>({});
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [loadingAttest, setLoadingAttest] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -74,14 +95,20 @@ function ParcoursPage() {
     })();
   }, [user]);
 
-  // Statut d'attestation pour chaque parcours actif
+  // Charger les données d'attestation pour chaque parcours
   useEffect(() => {
     if (!user || actifs.length === 0) return;
     (async () => {
       const entries = await Promise.all(
-        actifs.map(async (p) => [p.parcours_id, await fetchAttestationStatus(user.id, p.parcours_id)] as const),
+        actifs.map(async (p) => {
+          const { data, error } = await supabase.rpc("fn_parcours_attestation", {
+            p_etudiant_id: user.id,
+            p_parcours_id: p.parcours_id,
+          });
+          return [p.parcours_id, data] as const;
+        }),
       );
-      setAttest(Object.fromEntries(entries));
+      setAttestData(Object.fromEntries(entries));
     })();
   }, [user, actifs]);
 
@@ -89,9 +116,8 @@ function ParcoursPage() {
     if (!user) return;
     setDownloading(parcoursId);
     try {
-      const data = await buildAttestation(user.id, parcoursId);
-      if (!data) { toast.error("Attestation non disponible."); return; }
-      downloadAttestationPDF(data);
+      await generateAttestation(user.id, parcoursId);
+      toast.success("Attestation téléchargée avec succès !");
     } catch (e: any) {
       toast.error(e?.message ?? "Erreur lors de la génération.");
     } finally {
@@ -119,47 +145,144 @@ function ParcoursPage() {
 
   return (
     <AssirikShell title="📚 Mes parcours">
+      {/* Parcours actifs avec attestation */}
       {actifs.length > 0 && (
-        <section className="mb-6 space-y-2">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Parcours actifs</h2>
+        <section className="mb-6 space-y-4">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Mes parcours</h2>
+          
           {actifs.map((p) => {
             const days = p.date_fin ? Math.ceil((new Date(p.date_fin).getTime() - Date.now()) / 86400000) : null;
-            const st = attest[p.parcours_id];
-            return (
-              <div key={p.parcours_id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
-                <div>
-                  <p className="font-semibold">{p.nom}</p>
-                  <p className="text-xs text-muted-foreground">{p.date_fin ? `Fin : ${p.date_fin} · ${days} j restants` : "Pas de date de fin"}</p>
-                </div>
+            const attest = attestData[p.parcours_id];
+            const isEligible = attest?.eligible || false;
+            const isComplete = attest?.complete || false;
+            const noteMoyenne = attest?.note_moyenne || 0;
+            const modulesAReprendre = attest?.modules_a_reprendre || [];
+            const tauxReussite = attest?.taux_reussite || 0;
 
-                <div className="ml-auto flex flex-wrap items-center gap-2">
-                  {st?.complete && st.within_deadline && (
-                    <Button size="sm" onClick={() => downloadAttest(p.parcours_id)} disabled={downloading === p.parcours_id}>
-                      {downloading === p.parcours_id ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Award size={14} className="mr-1" />}
-                      Télécharger l'attestation
+            return (
+              <Card key={p.parcours_id} className={`border ${isEligible ? "border-green-200" : isComplete ? "border-amber-200" : "border-primary/10"}`}>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base">{p.nom}</CardTitle>
+                      <CardDescription>
+                        {p.date_fin ? `Fin : ${p.date_fin} · ${days !== null && days > 0 ? `${days} jours restants` : "Délai dépassé"}` : "Pas de date de fin"}
+                      </CardDescription>
+                    </div>
+                    <Badge variant={isEligible ? "default" : isComplete ? "secondary" : "outline"}>
+                      {isEligible ? "✅ Éligible" : isComplete ? "⚠️ Note insuffisante" : "En cours"}
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-3">
+                  {/* Progression */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Progression</span>
+                      <span className="font-medium">{tauxReussite.toFixed(1)}%</span>
+                    </div>
+                    <Progress value={tauxReussite} className="h-2" />
+                    <p className="text-xs text-muted-foreground">
+                      {attest?.modules_valides || 0} / {attest?.modules_total || 0} modules validés
+                    </p>
+                  </div>
+
+                  {/* Moyenne */}
+                  {isComplete && (
+                    <div className="flex items-center gap-2">
+                      <Badge variant={noteMoyenne >= 10 ? "default" : "destructive"}>
+                        Moyenne: {noteMoyenne.toFixed(1)}/20
+                      </Badge>
+                      {noteMoyenne >= 10 ? (
+                        <span className="text-xs text-green-600">✅ Seuil atteint</span>
+                      ) : (
+                        <span className="text-xs text-red-500">⚠️ {attest?.seuil_requis || 10}/20 requis</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Modules à reprendre */}
+                  {modulesAReprendre.length > 0 && (
+                    <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs font-medium text-red-700">Modules à repasser :</p>
+                      <ul className="list-disc list-inside text-xs text-red-600 mt-1">
+                        {modulesAReprendre.slice(0, 3).map((m: any) => (
+                          <li key={m.module_id}>
+                            {m.module_titre} - Note: {m.note_finale.toFixed(1)}/20
+                          </li>
+                        ))}
+                        {modulesAReprendre.length > 3 && (
+                          <li>+ {modulesAReprendre.length - 3} autres modules</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+
+                  {attest?.message && (
+                    <p className="text-sm text-muted-foreground">{attest.message}</p>
+                  )}
+                </CardContent>
+
+                <CardFooter className="flex flex-wrap gap-2 pt-2">
+                  {/* Bouton téléchargement */}
+                  {isEligible ? (
+                    <Button 
+                      onClick={() => downloadAttest(p.parcours_id)} 
+                      disabled={downloading === p.parcours_id}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                      {downloading === p.parcours_id ? (
+                        <Loader2 size={16} className="mr-2 animate-spin" />
+                      ) : (
+                        <Award size={16} className="mr-2" />
+                      )}
+                      {downloading === p.parcours_id ? "Génération..." : "Télécharger l'attestation"}
+                    </Button>
+                  ) : isComplete && modulesAReprendre.length > 0 ? (
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => {
+                        const firstModule = modulesAReprendre[0];
+                        if (firstModule) {
+                          window.location.href = `/etudiant/module/${firstModule.module_id}`;
+                        }
+                      }}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Repasser les modules échoués
+                    </Button>
+                  ) : (
+                    <Button variant="secondary" className="flex-1" disabled>
+                      {isComplete ? "Note insuffisante" : "Parcours non terminé"}
                     </Button>
                   )}
-                  {st?.complete && !st.within_deadline && (
-                    <Badge variant="secondary">Terminé hors délai</Badge>
-                  )}
-                  {days !== null && days < 7 && !st?.complete && (
+
+                  {/* Prolongation */}
+                  {days !== null && days < 7 && !isComplete && (
                     <Button size="sm" variant="outline" onClick={() => { setDialog(p); setForm({ date_souhaitee: "", justification: "" }); }}>
-                      <CalendarPlus size={14} className="mr-1" />Demander une prolongation
+                      <CalendarPlus size={14} className="mr-1" />Prolongation
                     </Button>
                   )}
-                  {days !== null && days < 7 && !st?.complete && <Badge variant="destructive">{days <= 0 ? "Échue" : `${days}j`}</Badge>}
-                </div>
-              </div>
+                  {days !== null && days < 7 && !isComplete && (
+                    <Badge variant="destructive">{days <= 0 ? "Échue" : `${days}j`}</Badge>
+                  )}
+                </CardFooter>
+              </Card>
             );
           })}
         </section>
       )}
+
+      {/* Modules */}
       {modules.length === 0 ? (
         <div className="rounded-2xl bg-card p-8 text-center text-muted-foreground">
           Aucun parcours assigné pour l'instant. Reviens plus tard ! ✨
         </div>
       ) : (
         <div className="space-y-3">
+          <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Modules</h3>
           {modules.map((m) => (
             <Link key={m.id} to="/etudiant/module/$moduleId" params={{ moduleId: m.id }} className="block transition hover:opacity-90">
               <ModuleCard module={m} />
@@ -167,6 +290,8 @@ function ParcoursPage() {
           ))}
         </div>
       )}
+
+      {/* Dialogue de prolongation */}
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Prolongation — {dialog?.nom}</DialogTitle></DialogHeader>
