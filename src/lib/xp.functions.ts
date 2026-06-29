@@ -77,7 +77,7 @@ async function addXPInternal(
 // === AJOUTER DE L'XP ===
 export const addXP = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => addXPSchema.parse(data))
+  .inputValidator((data) => addXPSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     return addXPInternal(context.userId, data);
   });
@@ -124,7 +124,7 @@ export const recordConnexion = createServerFn({ method: "POST" })
         const { error } = await supabaseAdmin
           .from("connexions")
           .insert({ etudiant_id: context.userId, date: today, streak: newStreak });
-        
+
         if (error) throw error;
 
         // Bonus XP pour le streak (5 XP par jour, doublé après 7 jours)
@@ -142,7 +142,7 @@ export const recordConnexion = createServerFn({ method: "POST" })
         const { error } = await supabaseAdmin
           .from("connexions")
           .insert({ etudiant_id: context.userId, date: today, streak: 1 });
-        
+
         if (error) throw error;
         return { streak: 1 };
       }
@@ -151,7 +151,7 @@ export const recordConnexion = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin
         .from("connexions")
         .insert({ etudiant_id: context.userId, date: today, streak: 1 });
-      
+
       if (error) throw error;
 
       // Bonus XP pour première connexion
@@ -169,7 +169,7 @@ export const recordConnexion = createServerFn({ method: "POST" })
 // === RÉCUPÉRER LE LEADERBOARD ===
 export const getLeaderboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => leaderboardSchema.parse(data))
+  .inputValidator((data) => leaderboardSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { parcours_id, limit } = data || { limit: 10 };
 
@@ -200,7 +200,7 @@ export const getLeaderboard = createServerFn({ method: "GET" })
 // === RÉCUPÉRER LES BADGES ===
 export const getStudentBadges = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => studentBadgesSchema.parse(data))
+  .inputValidator((data) => studentBadgesSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { etudiant_id } = data || {};
 
