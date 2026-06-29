@@ -9,6 +9,7 @@ export interface CurrentUser {
   role: AppRole | null;
   fullName: string | null;
   loading: boolean;
+  isLoading: boolean;
 }
 
 export function useCurrentUser(): CurrentUser {
@@ -50,5 +51,5 @@ export function useCurrentUser(): CurrentUser {
     };
   }, []);
 
-  return state;
+  return { ...state, isLoading: state.loading };
 }
