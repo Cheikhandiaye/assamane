@@ -81,6 +81,7 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
       return;
     }
     setSaving(true);
+
     const payload = {
       nom: form.nom.trim(),
       logo_url: form.logo_url.trim() || null,
@@ -89,17 +90,45 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
       adresse: form.adresse.trim() || null,
       contact_email: form.contact_email.trim() || null,
     };
-    const { error } = initial
-      ? await supabase.from("partenaires").update(payload).eq("id", initial.id)
-      : await supabase.from("partenaires").insert(payload);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+
+    try {
+      if (initial) {
+        // 🔥 UTILISER LA FONCTION RPC update_partenaire
+        const { data, error } = await supabase.rpc("update_partenaire", {
+          p_id: initial.id,
+          p_nom: payload.nom,
+          p_contact_email: payload.contact_email,
+          p_adresse: payload.adresse,
+          p_logo_url: payload.logo_url,
+          p_couleur_primaire: payload.couleur_primaire,
+          p_couleur_secondaire: payload.couleur_secondaire,
+        });
+
+        if (error) throw error;
+        toast.success("Partenaire mis à jour");
+      } else {
+        // 🔥 UTILISER LA FONCTION RPC create_partenaire
+        const { data, error } = await supabase.rpc("create_partenaire", {
+          p_nom: payload.nom,
+          p_contact_email: payload.contact_email,
+          p_adresse: payload.adresse,
+          p_logo_url: payload.logo_url,
+          p_couleur_primaire: payload.couleur_primaire,
+          p_couleur_secondaire: payload.couleur_secondaire,
+        });
+
+        if (error) throw error;
+        toast.success("Partenaire créé");
+      }
+
+      onSaved();
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Erreur sauvegarde:", error);
+      toast.error(error.message || "Erreur lors de la sauvegarde");
+    } finally {
+      setSaving(false);
     }
-    toast.success(initial ? "Partenaire mis à jour" : "Partenaire créé");
-    onSaved();
-    onOpenChange(false);
   }
 
   return (
