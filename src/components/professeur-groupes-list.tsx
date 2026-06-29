@@ -33,13 +33,13 @@ interface GroupeMembre {
 interface GroupeData {
   id: string;
   nom: string;
-  rapporteur_id: string;
-  parcours_id: string;
-  created_at: string;
+  rapporteur_id: string | null;
+  parcours_id: string | null;
+  created_at: string | null;
   parcours: {
     id: string;
     nom: string;
-  };
+  } | null;
   groupe_membres: GroupeMembre[];
   suivi_groupe_module: Array<{
     module_id: string;
@@ -82,7 +82,7 @@ export function ProfesseurGroupesList() {
     setLoading(true);
     try {
       const data = await getProfessorGroupes({});
-      setGroupes(data || []);
+      setGroupes((data || []) as GroupeData[]);
     } catch (error) {
       console.error("Erreur chargement groupes:", error);
       toast.error("Impossible de charger les groupes");
@@ -229,7 +229,7 @@ export function ProfesseurGroupesList() {
       // Rafraîchir les disponibles si la boîte de dialogue est ouverte
       const groupe = groupes.find((g) => g.id === groupeId);
       if (groupe) {
-        await fetchAvailableEtudiants(groupeId, groupe.parcours_id);
+        if (groupe.parcours_id) await fetchAvailableEtudiants(groupeId, groupe.parcours_id);
       }
     } catch (error: any) {
       toast.error(error.message || "Erreur");
@@ -249,7 +249,7 @@ export function ProfesseurGroupesList() {
       // Rafraîchir les disponibles
       const groupe = groupes.find((g) => g.id === groupeId);
       if (groupe) {
-        await fetchAvailableEtudiants(groupeId, groupe.parcours_id);
+        if (groupe.parcours_id) await fetchAvailableEtudiants(groupeId, groupe.parcours_id);
       }
     } catch (error: any) {
       toast.error(error.message || "Erreur");
@@ -268,7 +268,7 @@ export function ProfesseurGroupesList() {
 
   const handleOpenManageDialog = async (groupe: GroupeData) => {
     setManageGroupeId(groupe.id);
-    await fetchAvailableEtudiants(groupe.id, groupe.parcours_id);
+    if (groupe.parcours_id) await fetchAvailableEtudiants(groupe.id, groupe.parcours_id);
     setSelectedAddEtudiant("");
     setManageDialogOpen(true);
   };
@@ -383,6 +383,7 @@ export function ProfesseurGroupesList() {
                         >
                           <input
                             type="checkbox"
+                            value={e.id}
                             checked={selectedEtudiants.includes(e.id)}
                             onChange={(e) => {
                               if (e.target.checked) {

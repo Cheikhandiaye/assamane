@@ -35,12 +35,12 @@ export const Route = createFileRoute("/_authenticated/etudiant")({
 interface GroupeData {
   id: string;
   nom: string;
-  rapporteur_id: string;
-  parcours_id: string;
+  rapporteur_id: string | null;
+  parcours_id: string | null;
   parcours: {
     id: string;
     nom: string;
-  };
+  } | null;
   groupe_membres: Array<{
     etudiant_id: string;
     profiles: {
@@ -59,14 +59,14 @@ interface GroupeData {
 
 interface XPData {
   id: string;
-  total_xp: number;
-  niveau: number;
+  total_xp: number | null;
+  niveau: number | null;
 }
 
 interface NoteModule {
   module_id: string;
   parcours_id: string;
-  note_finale: number;
+  note_finale: number | null;
   modules_cours: {
     titre: string;
     ordre: number;

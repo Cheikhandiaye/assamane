@@ -39,13 +39,13 @@ interface GroupeMembre {
 interface GroupeData {
   id: string;
   nom: string;
-  rapporteur_id: string;
-  parcours_id: string;
-  created_at: string;
+  rapporteur_id: string | null;
+  parcours_id: string | null;
+  created_at: string | null;
   parcours: {
     id: string;
     nom: string;
-  };
+  } | null;
   groupe_membres: GroupeMembre[];
   suivi_groupe_module: Array<{
     module_id: string;
@@ -90,7 +90,7 @@ function ProfDashboard() {
     setLoadingGroupes(true);
     try {
       const data = await getProfessorGroupes({});
-      setGroupes(data || []);
+      setGroupes((data || []) as GroupeData[]);
     } catch (error) {
       console.error("Erreur chargement groupes:", error);
       toast.error("Impossible de charger les groupes");
@@ -355,6 +355,7 @@ function ProfDashboard() {
                           <div key={e.id} className="flex items-center gap-2 py-1">
                             <input
                               type="checkbox"
+                              value={e.id}
                               id={`etudiant-${e.id}`}
                               checked={selectedEtudiants.includes(e.id)}
                               onChange={(e) => {
