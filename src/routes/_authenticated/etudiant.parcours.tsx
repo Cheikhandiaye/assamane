@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
-import { Lock, Video, NotebookPen, Clock, CheckCircle, CalendarPlus, Award, Loader2, AlertCircle } from "lucide-react";
+import { Lock, Video, NotebookPen, Clock, CheckCircle, CalendarPlus, Award, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { useRoleGuard } from "@/hooks/use-role-guard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +108,7 @@ function ParcoursPage() {
           return [p.parcours_id, data] as const;
         }),
       );
-      setAttestData(Object.fromEntries(entries));
+      setAttestData(Object.fromEntries(entries) as Record<string, AttestationData>);
     })();
   }, [user, actifs]);
 
