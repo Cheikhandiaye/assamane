@@ -9,32 +9,29 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/etudiant/notifications")({
   component: Page,
-  errorComponent: ({ error }) => {
-    console.error("Erreur page notifications:", error);
-    return (
-      <AssirikShell title="🔔 Notifications">
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
-          <h2 className="text-xl font-bold mb-2">Erreur de chargement</h2>
-          <p className="text-muted-foreground max-w-md">
-            Les notifications n'ont pas pu être chargées.
-          </p>
-          <Button 
-            className="mt-4"
-            onClick={() => window.location.reload()}
-          >
-            Réessayer
-          </Button>
-        </div>
-      </AssirikShell>
-    );
-  },
 });
 
 function Page() {
   useRoleGuard("etudiant");
   const { user } = useCurrentUser();
   
+  // Hook avec gestion d'erreur et chargement
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead, 
+    isLoading,
+    error 
+  } = useNotifications(user?.id);
+
+  // Debug : afficher les données dans la console
+  console.log("🔔 Page Notifications - user:", user?.id);
+  console.log("🔔 Page Notifications - isLoading:", isLoading);
+  console.log("🔔 Page Notifications - error:", error);
+  console.log("🔔 Page Notifications - notifications:", notifications);
+  console.log("🔔 Page Notifications - unreadCount:", unreadCount);
+
   // Vérifier que user existe
   if (!user) {
     return (
@@ -56,18 +53,9 @@ function Page() {
     );
   }
 
-  // Utiliser le hook avec gestion d'erreur
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    markAllAsRead, 
-    isLoading,
-    error 
-  } = useNotifications(user.id);
-
   // Si erreur du hook
   if (error) {
+    console.error("🔔 Erreur hook notifications:", error);
     return (
       <AssirikShell title="🔔 Notifications">
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -141,12 +129,12 @@ function Page() {
                 <li 
                   key={id} 
                   className={cn(
-                    "rounded-xl border border-border bg-card p-4",
+                    "rounded-xl border border-border bg-card p-4 transition-colors",
                     !isLu && "border-primary/40 bg-primary/5"
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold">{titre}</p>
                       <p className="text-sm text-muted-foreground">{message}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
