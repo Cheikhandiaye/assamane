@@ -108,7 +108,7 @@ function ParcoursPage() {
           return [p.parcours_id, data] as const;
         }),
       );
-      setAttestData(Object.fromEntries(entries) as Record<string, AttestationData>);
+      setAttestData(Object.fromEntries(entries) as unknown as Record<string, AttestationData>);
     })();
   }, [user, actifs]);
 
