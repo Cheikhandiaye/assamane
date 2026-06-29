@@ -77,6 +77,8 @@ function AuthPage() {
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium text-foreground">Nom complet</span>
               <input
+                id="fullName"                    // ← AJOUTÉ
+                name="fullName"                  // ← AJOUTÉ
                 type="text"
                 required
                 value={fullName}
@@ -88,6 +90,8 @@ function AuthPage() {
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium text-foreground">Email</span>
             <input
+              id="email"                        // ← AJOUTÉ
+              name="email"                      // ← AJOUTÉ
               type="email"
               required
               autoComplete="email"
@@ -99,6 +103,8 @@ function AuthPage() {
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium text-foreground">Mot de passe</span>
             <input
+              id="password"                     // ← AJOUTÉ
+              name="password"                   // ← AJOUTÉ
               type="password"
               required
               minLength={8}
