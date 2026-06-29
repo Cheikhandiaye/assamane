@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, XCircle, AlertCircle, Download, RefreshCw, FileText, Award, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { generateAttestation } from "@/lib/attestation";
+import { generateAttestation, normalizeDetailedAttestationData } from "@/lib/attestation";
 
 interface ModuleNote {
   module_id: string;
@@ -55,7 +55,7 @@ export function EtudiantAttestationCard({ etudiantId, parcoursId, parcoursTitre 
       });
 
       if (rpcError) throw rpcError;
-      setData(result);
+      setData(normalizeDetailedAttestationData(result, parcoursTitre));
     } catch (error: any) {
       console.error("Erreur chargement attestation:", error);
       setError(error.message || "Erreur de chargement");
