@@ -2,71 +2,96 @@ import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router"
 import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Users, CheckSquare, CalendarCheck, Layers } from "lucide-react";
 import { useRoleGuard } from "@/hooks/use-role-guard";
+import { supabase } from "@/integrations/supabase/client";
+import { ProfessorStatsCard } from "@/components/professor-stats-card";
+import { ProfessorStudentsList } from "@/components/professor-students-list";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/professeur")({
-  component: ProfDashboard,
+  component: ProfesseurDashboard,
 });
 
-function ProfDashboard() {
+function ProfesseurDashboard() {
   useRoleGuard("professeur");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUser();
-  const [stats, setStats] = useState<{ label: string; value: number; icon: typeof BookOpen }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
 
-  // Statistiques du tableau de bord
   useEffect(() => {
     if (pathname !== "/professeur") return;
     if (!user) return;
-    (async () => {
-      const { data: pp } = await supabase
-        .from("parcours_professeurs")
-        .select("parcours_id")
-        .eq("professeur_id", user.id);
-      const parcoursIds = (pp ?? []).map((p) => p.parcours_id);
-      const [{ count: nbModules }, { count: nbValidations }, { count: nbSessions }] = await Promise.all([
-        supabase.from("modules_cours").select("*", { count: "exact", head: true }).eq("created_by", user.id),
-        supabase.from("reponses_etudiant").select("*", { count: "exact", head: true }).eq("statut", "soumis"),
-        supabase.from("sessions_cours").select("*", { count: "exact", head: true }).eq("professeur_id", user.id).eq("statut", "ouverte"),
-      ]);
-      let nbEtudiants = 0;
-      if (parcoursIds.length) {
-        const { count } = await supabase.from("parcours_etudiants").select("*", { count: "exact", head: true }).in("parcours_id", parcoursIds);
-        nbEtudiants = count ?? 0;
+
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        // Charger les statistiques
+        const { data: statsData, error: statsError } = await supabase
+          .rpc("get_professor_stats", { p_professeur_id: user.id });
+
+        if (statsError) throw statsError;
+        setStats(statsData);
+
+        // Charger la liste des étudiants
+        const { data: studentsData, error: studentsError } = await supabase
+          .rpc("get_professor_students", { p_professeur_id: user.id });
+
+        if (studentsError) throw studentsError;
+        setStudents(studentsData || []);
+      } catch (error: any) {
+        console.error("Erreur chargement dashboard:", error);
+        toast.error(error.message || "Erreur de chargement");
+      } finally {
+        setLoading(false);
       }
-      setStats([
-        { label: "Mes parcours", value: parcoursIds.length, icon: BookOpen },
-        { label: "Mes étudiants", value: nbEtudiants, icon: Users },
-        { label: "Mes modules", value: nbModules ?? 0, icon: Layers },
-        { label: "Validations en attente", value: nbValidations ?? 0, icon: CheckSquare },
-        { label: "Sessions ouvertes", value: nbSessions ?? 0, icon: CalendarCheck },
-      ]);
-    })();
+    };
+
+    loadData();
   }, [pathname, user]);
 
   if (pathname !== "/professeur") return <Outlet />;
 
-  return (
-    <AssirikShell title="🎓 Tableau de bord Professeur">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-        {stats.map((s) => {
-          const Icon = s.icon;
-          return (
-            <div key={s.label} className="rounded-2xl bg-card p-5 shadow-sm">
-              <Icon size={20} className="text-primary" />
-              <p className="mt-3 text-3xl font-black">{s.value}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
-            </div>
-          );
-        })}
-      </div>
+  if (loading) {
+    return (
+      <AssirikShell title="Tableau de bord Professeur">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AssirikShell>
+    );
+  }
 
-      <p className="mt-8 rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-        💡 La gestion des groupes se fait désormais depuis chaque parcours : ouvre un parcours dans
-        <strong> Mes parcours</strong>, puis clique sur <strong>Gérer les groupes</strong>.
-      </p>
+  return (
+    <AssirikShell title="📊 Tableau de bord Professeur">
+      <div className="space-y-6">
+        {/* Statistiques */}
+        {stats && <ProfessorStatsCard stats={stats} />}
+
+        {/* Liste des étudiants */}
+        <Tabs defaultValue="all">
+          <TabsList>
+            <TabsTrigger value="all">Tous</TabsTrigger>
+            <TabsTrigger value="difficulte">En difficulté</TabsTrigger>
+            <TabsTrigger value="terminé">Terminé</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all">
+            <ProfessorStudentsList students={students} />
+          </TabsContent>
+          <TabsContent value="difficulte">
+            <ProfessorStudentsList 
+              students={students.filter((s: any) => s.statut === "En difficulté")} 
+            />
+          </TabsContent>
+          <TabsContent value="terminé">
+            <ProfessorStudentsList 
+              students={students.filter((s: any) => s.statut === "Terminé")} 
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </AssirikShell>
   );
 }
