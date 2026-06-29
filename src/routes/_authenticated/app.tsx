@@ -1,64 +1,89 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppRouter,
-  beforeLoad: async () => {
-    // Vérifier si l'utilisateur est connecté
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
-      throw redirect({ to: "/auth" });
-    }
-  },
 });
 
 function AppRouter() {
   const navigate = useNavigate();
-  const { user, role, isLoading } = useCurrentUser();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Attendre que le chargement soit terminé
-    if (isLoading) return;
+    const checkAndRedirect = async () => {
+      try {
+        // 1. Récupérer la session
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (!sessionData.session) {
+          // Pas de session → rediriger vers auth
+          navigate({ to: "/auth", replace: true });
+          return;
+        }
 
-    // Si pas d'utilisateur, rediriger vers auth
-    if (!user) {
-      navigate({ to: "/auth", replace: true });
-      return;
-    }
+        const user = sessionData.session.user;
+        if (!user) {
+          navigate({ to: "/auth", replace: true });
+          return;
+        }
 
-    // Si pas de rôle, rediriger vers une page d'erreur ou auth
-    if (!role) {
-      console.warn("AppRouter: Aucun rôle trouvé pour l'utilisateur", user.id);
-      navigate({ to: "/auth", replace: true });
-      return;
-    }
+        // 2. Récupérer le rôle de l'utilisateur (une seule requête)
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-    // Rediriger vers le dashboard correspondant au rôle
-    console.log(`AppRouter: Redirection vers /${role} pour l'utilisateur ${user.id}`);
+        if (roleError) {
+          console.error("Erreur récupération rôle:", roleError);
+          // En cas d'erreur, déconnecter et rediriger vers auth
+          await supabase.auth.signOut();
+          navigate({ to: "/auth", replace: true });
+          return;
+        }
 
-    // Éviter les boucles en vérifiant si on est déjà sur la bonne page
-    const currentPath = window.location.pathname;
-    const targetPath = `/${role}`;
+        if (!roleData?.role) {
+          console.warn("Aucun rôle trouvé pour l'utilisateur", user.id);
+          // Pas de rôle → déconnecter et rediriger
+          await supabase.auth.signOut();
+          navigate({ to: "/auth", replace: true });
+          return;
+        }
 
-    if (currentPath === targetPath) {
-      console.log("AppRouter: Déjà sur la bonne page, pas de redirection");
-      return;
-    }
+        // 3. Rediriger vers le dashboard du rôle
+        const targetPath = `/${roleData.role}`;
+        const currentPath = window.location.pathname;
 
-    // Rediriger vers le bon dashboard
-    navigate({ to: targetPath, replace: true });
+        if (currentPath === targetPath) {
+          // Déjà sur la bonne page → arrêter le chargement
+          setLoading(false);
+          return;
+        }
 
-  }, [user, role, isLoading, navigate]);
+        // Rediriger vers le bon dashboard
+        navigate({ to: targetPath, replace: true });
 
-  // Pendant le chargement, afficher un écran de chargement
-  return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="text-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-        <p className="text-muted-foreground">Redirection...</p>
+      } catch (error) {
+        console.error("Erreur AppRouter:", error);
+        // En cas d'erreur inattendue → auth
+        navigate({ to: "/auth", replace: true });
+      }
+    };
+
+    checkAndRedirect();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <p className="text-muted-foreground">Redirection...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
