@@ -1,270 +1,266 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AssirikShell } from "@/components/assirik-shell";
-import { useRoleGuard } from "@/hooks/use-role-guard";
-import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { RouteErrorBoundary } from "@/components/route-error-boundary";
-import { PartnerLogo } from "@/components/partner-logo";
-import {
-  Loader2, ArrowLeft, Target, Users,
-  Building2, Mail, BookOpen, Pencil, Trash2,
-} from "lucide-react";
-import { PartenaireFormDialog } from "@/components/partenaire-form";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { uploadPartnerLogo, deletePartnerLogo } from "@/lib/storage";
+import { PartnerLogo } from "@/components/partner-logo";
+import { Upload, Loader2, X } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/partenaires/$partenaireId")({
-  component: Page,
-});
-export const ErrorBoundary = RouteErrorBoundary;
-
-function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xl font-bold text-foreground">{value}</p>
-      </div>
-    </div>
-  );
+export interface Partenaire {
+  id: string;
+  nom: string;
+  logo_url: string | null;
+  couleur_primaire: string | null;
+  couleur_secondaire: string | null;
+  adresse: string | null;
+  contact_email: string | null;
 }
 
-function Page() {
-  useRoleGuard("admin");
-  const { partenaireId } = Route.useParams();
-  const [loading, setLoading] = useState(true);
-  const [partenaire, setPartenaire] = useState<any>(null);
-  const [missions, setMissions] = useState<any[]>([]);
-  const [stats, setStats] = useState({ missions: 0, parcours: 0, etudiants: 0 });
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initial?: Partenaire | null;
+  onSaved: () => void;
+}
+
+const EMPTY = {
+  nom: "",
+  logo_url: "",
+  couleur_primaire: "#7C3AED",
+  couleur_secondaire: "#F97316",
+  adresse: "",
+  contact_email: "",
+};
+
+export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: Props) {
+  const [form, setForm] = useState(EMPTY);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      // 🔥 UTILISER LA FONCTION RPC pour récupérer le partenaire
-      const { data: pData, error: pError } = await supabase
-        .rpc("get_partenaire_by_id", { p_id: partenaireId });
-
-      if (pError) {
-        console.error("Erreur chargement partenaire:", pError);
-        toast.error("Erreur de chargement du partenaire");
-        setLoading(false);
-        return;
-      }
-
-      const p = pData?.[0] || null;
-      setPartenaire(p);
-
-      // Récupérer les missions (RLS gère automatiquement)
-      const { data: mData, error: mError } = await supabase
-        .from("missions")
-        .select("id, nom, statut, date_debut, date_fin, description")
-        .eq("partenaire_id", partenaireId)
-        .order("created_at", { ascending: false });
-
-      if (mError) {
-        console.error("Erreur chargement missions:", mError);
-        toast.error("Erreur de chargement des missions");
-        setLoading(false);
-        return;
-      }
-
-      const missionsData = mData ?? [];
-
-      // Enrichit chaque mission avec nb parcours + nb étudiants
-      const enriched = await Promise.all(
-        missionsData.map(async (ms) => {
-          const { data: pcs } = await supabase
-            .from("parcours")
-            .select("id")
-            .eq("mission_id", ms.id);
-
-          const parcoursIds = (pcs ?? []).map((pc) => pc.id);
-          let nbEtu = 0;
-          if (parcoursIds.length) {
-            const { count } = await supabase
-              .from("parcours_etudiants")
-              .select("*", { count: "exact", head: true })
-              .in("parcours_id", parcoursIds);
-            nbEtu = count ?? 0;
-          }
-          return { ...ms, _nb_parcours: parcoursIds.length, _nb_etudiants: nbEtu };
-        })
+    if (open) {
+      setForm(
+        initial
+          ? {
+              nom: initial.nom,
+              logo_url: initial.logo_url ?? "",
+              couleur_primaire: initial.couleur_primaire ?? "#7C3AED",
+              couleur_secondaire: initial.couleur_secondaire ?? "#F97316",
+              adresse: initial.adresse ?? "",
+              contact_email: initial.contact_email ?? "",
+            }
+          : EMPTY,
       );
+    }
+  }, [open, initial]);
 
-      setMissions(enriched);
-      setStats({
-        missions: enriched.length,
-        parcours: enriched.reduce((s, ms) => s + ms._nb_parcours, 0),
-        etudiants: enriched.reduce((s, ms) => s + ms._nb_etudiants, 0),
-      });
-      setLoading(false);
-    })();
-  }, [partenaireId]);
+  function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
 
-  // 🔥 Fonction de suppression via RPC
-  const handleDelete = async () => {
-    if (!confirm(`Supprimer définitivement le partenaire "${partenaire?.nom}" ?`)) return;
+  async function onPickLogo(file: File | null) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Logo > 5 Mo");
+      return;
+    }
+    setUploading(true);
+    try {
+      const path = await uploadPartnerLogo(file);
+      set("logo_url", path);
+      toast.success("Logo téléversé");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur d'upload");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function onRemoveLogo() {
+    if (!form.logo_url) return;
+    try {
+      await deletePartnerLogo(form.logo_url);
+      set("logo_url", "");
+      toast.success("Logo supprimé");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur lors de la suppression");
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.nom.trim()) {
+      toast.error("Le nom est requis");
+      return;
+    }
+    setSaving(true);
+
+    const payload = {
+      nom: form.nom.trim(),
+      logo_url: form.logo_url.trim() || null,
+      couleur_primaire: form.couleur_primaire || null,
+      couleur_secondaire: form.couleur_secondaire || null,
+      adresse: form.adresse.trim() || null,
+      contact_email: form.contact_email.trim() || null,
+    };
 
     try {
-      const { data, error } = await supabase.rpc("delete_partenaire", {
-        p_id: partenaireId,
-      });
+      if (initial) {
+        const { data, error } = await supabase.rpc("update_partenaire", {
+          p_id: initial.id,
+          p_nom: payload.nom,
+          p_contact_email: payload.contact_email,
+          p_adresse: payload.adresse,
+          p_logo_url: payload.logo_url,
+          p_couleur_primaire: payload.couleur_primaire,
+          p_couleur_secondaire: payload.couleur_secondaire,
+        });
 
-      if (error) throw error;
-      toast.success("Partenaire supprimé");
-      // Rediriger vers la liste
-      window.location.href = "/admin/partenaires";
+        if (error) throw error;
+        toast.success("Partenaire mis à jour");
+      } else {
+        const { data, error } = await supabase.rpc("create_partenaire", {
+          p_nom: payload.nom,
+          p_contact_email: payload.contact_email,
+          p_adresse: payload.adresse,
+          p_logo_url: payload.logo_url,
+          p_couleur_primaire: payload.couleur_primaire,
+          p_couleur_secondaire: payload.couleur_secondaire,
+        });
+
+        if (error) throw error;
+        toast.success("Partenaire créé");
+      }
+
+      onSaved();
+      onOpenChange(false);
     } catch (error: any) {
-      console.error("Erreur suppression:", error);
-      toast.error(error.message || "Erreur lors de la suppression");
+      console.error("Erreur sauvegarde:", error);
+      toast.error(error.message || "Erreur lors de la sauvegarde");
+    } finally {
+      setSaving(false);
     }
-  };
-
-  if (loading) {
-    return (
-      <AssirikShell title="Partenaire">
-        <Loader2 className="mx-auto animate-spin text-primary" />
-      </AssirikShell>
-    );
   }
-
-  if (!partenaire) {
-    return (
-      <AssirikShell title="Partenaire introuvable">
-        <p className="text-muted-foreground">Ce partenaire n'existe pas.</p>
-        <Link to="/admin/partenaires">
-          <Button variant="outline" className="mt-4"><ArrowLeft size={14} className="mr-1" />Retour</Button>
-        </Link>
-      </AssirikShell>
-    );
-  }
-
-  const STATUT_COLOR: Record<string, string> = {
-    brouillon: "bg-muted text-muted-foreground",
-    active:    "bg-green-100 text-green-700",
-    terminee:  "bg-blue-100 text-blue-700",
-  };
 
   return (
-    <AssirikShell title={`🏢 ${partenaire.nom}`}>
-      {/* Retour */}
-      <div className="flex items-center justify-between mb-4">
-        <Link to="/admin/partenaires">
-          <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft size={14} className="mr-1" /> Tous les partenaires
-          </Button>
-        </Link>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
-            <Pencil size={14} className="mr-1" /> Modifier
-          </Button>
-          <Button variant="destructive" size="sm" onClick={handleDelete}>
-            <Trash2 size={14} className="mr-1" /> Supprimer
-          </Button>
-        </div>
-      </div>
-
-      {/* Header partenaire */}
-      <div className="mb-6 rounded-2xl border border-border bg-card p-5">
-        <div className="flex items-center gap-4">
-          <PartnerLogo
-            path={partenaire.logo_url}
-            alt={partenaire.nom}
-            className="h-16 w-16 rounded-xl object-cover"
-          />
-          <div>
-            <h1 className="text-lg font-bold flex items-center gap-2">
-              <Building2 size={18} className="text-primary" />
-              {partenaire.nom}
-            </h1>
-            {partenaire.contact_email && (
-              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                <Mail size={12} /> {partenaire.contact_email}
-              </p>
-            )}
-            {partenaire.adresse && (
-              <p className="text-sm text-muted-foreground mt-0.5">📍 {partenaire.adresse}</p>
-            )}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{initial ? "Modifier le partenaire" : "Nouveau partenaire"}</DialogTitle>
+          <DialogDescription>
+            Renseigne les informations du partenaire. Le nom est obligatoire.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Nom */}
+          <div className="space-y-2">
+            <Label htmlFor="nom">Nom *</Label>
+            <Input id="nom" value={form.nom} onChange={(e) => set("nom", e.target.value)} required />
           </div>
-          <div className="ml-auto flex gap-2 self-start">
-            <div
-              className="h-6 w-6 rounded-full border border-border"
-              style={{ background: partenaire.couleur_primaire ?? "#7C3AED" }}
-              title="Couleur primaire"
-            />
-            <div
-              className="h-6 w-6 rounded-full border border-border"
-              style={{ background: partenaire.couleur_secondaire ?? "#F97316" }}
-              title="Couleur secondaire"
+
+          {/* ============================================ */}
+          {/* UPLOAD DU LOGO - AVEC BOUTON DE TÉLÉVERSEMENT */}
+          {/* ============================================ */}
+          <div className="space-y-2">
+            <Label>Logo</Label>
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent transition-colors">
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                {uploading ? "Téléversement..." : "Téléverser un fichier"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => onPickLogo(e.target.files?.[0] ?? null)}
+                  disabled={uploading}
+                />
+              </label>
+              <Input
+                id="logo"
+                value={form.logo_url}
+                onChange={(e) => set("logo_url", e.target.value)}
+                placeholder="https://… ou téléverser"
+                className="flex-1 min-w-[150px]"
+              />
+            </div>
+
+            {/* Aperçu du logo avec bouton de suppression */}
+            {form.logo_url && (
+              <div className="flex items-center gap-3 p-2 rounded-md border bg-muted/30">
+                <PartnerLogo path={form.logo_url} alt="Aperçu" className="h-12 w-12 rounded-md object-cover" />
+                <span className="text-xs text-muted-foreground flex-1 truncate">{form.logo_url}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                  onClick={onRemoveLogo}
+                >
+                  <X size={14} />
+                </Button>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">Formats acceptés: PNG, JPG, WEBP, SVG (max 5 Mo)</p>
+          </div>
+
+          {/* Couleurs */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="cp">Couleur primaire</Label>
+              <Input
+                id="cp"
+                type="color"
+                value={form.couleur_primaire}
+                onChange={(e) => set("couleur_primaire", e.target.value)}
+                className="h-10 p-1"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cs">Couleur secondaire</Label>
+              <Input
+                id="cs"
+                type="color"
+                value={form.couleur_secondaire}
+                onChange={(e) => set("couleur_secondaire", e.target.value)}
+                className="h-10 p-1"
+              />
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email de contact</Label>
+            <Input
+              id="email"
+              type="email"
+              value={form.contact_email}
+              onChange={(e) => set("contact_email", e.target.value)}
             />
           </div>
-        </div>
-      </div>
 
-      {/* Stats */}
-      <div className="mb-6 grid grid-cols-3 gap-3">
-        <StatCard icon={<Target size={18} />} label="Missions" value={stats.missions} />
-        <StatCard icon={<BookOpen size={18} />} label="Parcours" value={stats.parcours} />
-        <StatCard icon={<Users size={18} />} label="Étudiants" value={stats.etudiants} />
-      </div>
+          {/* Adresse */}
+          <div className="space-y-2">
+            <Label htmlFor="adresse">Adresse</Label>
+            <Input
+              id="adresse"
+              value={form.adresse}
+              onChange={(e) => set("adresse", e.target.value)}
+            />
+          </div>
 
-      {/* Missions */}
-      <h2 className="mb-3 font-semibold text-foreground">Missions</h2>
-      {missions.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground text-sm">
-          Aucune mission pour ce partenaire.
-          <br />
-          <Link to="/admin/missions" className="mt-2 inline-block text-primary underline-offset-2 hover:underline">
-            Créer une mission →
-          </Link>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {missions.map((ms) => (
-            <Link
-              key={ms.id}
-              to="/admin/missions/$missionId"
-              params={{ missionId: ms.id }}
-              className="block rounded-2xl border border-border bg-card p-5 transition hover:border-primary hover:shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Target size={16} className="text-primary shrink-0" />
-                  <p className="font-semibold truncate">{ms.nom}</p>
-                </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUT_COLOR[ms.statut] ?? "bg-muted"}`}>
-                  {ms.statut}
-                </span>
-              </div>
-
-              {ms.description && (
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{ms.description}</p>
-              )}
-
-              <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                {ms.date_debut && <span>📅 {new Date(ms.date_debut).toLocaleDateString("fr-FR")}</span>}
-                {ms.date_fin && <span>→ {new Date(ms.date_fin).toLocaleDateString("fr-FR")}</span>}
-                <span className="flex items-center gap-1"><BookOpen size={11} />{ms._nb_parcours} parcours</span>
-                <span className="flex items-center gap-1"><Users size={11} />{ms._nb_etudiants} étudiant(s)</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* Dialog d'édition */}
-      <PartenaireFormDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        initial={partenaire}
-        onSaved={() => {
-          // Recharger les données
-          window.location.reload();
-        }}
-      />
-    </AssirikShell>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Enregistrement..." : initial ? "Mettre à jour" : "Créer"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
