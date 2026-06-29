@@ -29,7 +29,7 @@ export async function fetchUsersByRole(
   const cols = withCreatedAt ? "id, full_name, email, created_at" : "id, full_name, email";
   const { data: profs, error: profsError } = await supabase
     .from("profiles")
-    .select(cols)
+    .select(cols as any)
     .in("id", ids);
 
   if (profsError) {
@@ -37,7 +37,7 @@ export async function fetchUsersByRole(
     return [];
   }
 
-  return (profs ?? []) as RoleUser[];
+  return (profs ?? []) as unknown as RoleUser[];
 }
 
 // Étudiants rattachés à un partenaire donné (rôle etudiant ET profiles.partenaire_id = X).
