@@ -45,7 +45,7 @@ interface GroupeData {
     etudiant_id: string;
     profiles: {
       id: string;
-      full_name: string;
+      full_name: string | null;
       avatar_url: string | null;
     };
   }>;
@@ -105,7 +105,7 @@ function EtudiantDashboard() {
       try {
         // 1. Récupérer le groupe de l'étudiant
         const groupeData = await getStudentGroupe({});
-        setGroupe(groupeData);
+        setGroupe(groupeData as GroupeData | null);
 
         // 2. Récupérer XP et niveau
         const xpData = await getStudentXP({});
@@ -323,7 +323,7 @@ function EtudiantDashboard() {
                     {parcoursInscrits.map((p) => {
                       const modules = p.parcours?.modules_cours || [];
                       const modulesValides = notes.filter(
-                        (n) => n.note_finale >= 70
+                        (n) => (n.note_finale ?? 0) >= 70
                       ).map((n) => n.module_id);
                       const progression = modules.length > 0 
                         ? Math.round((modules.filter((m: any) => modulesValides.includes(m.id)).length / modules.length) * 100)
@@ -381,7 +381,7 @@ function EtudiantDashboard() {
               totalModules={moduleActuel.total}
               noteFinale={notes.find(
                 (n) => n.module_id === moduleActuel.id
-              )?.note_finale}
+              )?.note_finale ?? undefined}
               isGroupe={!!groupe}
               isRapporteur={groupe?.rapporteur_id === user?.id}
             />

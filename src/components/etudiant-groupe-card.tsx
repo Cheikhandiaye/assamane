@@ -8,7 +8,7 @@ interface GroupeMembre {
   etudiant_id: string;
   profiles: {
     id: string;
-    full_name: string;
+    full_name: string | null;
     avatar_url: string | null;
   };
 }
@@ -16,12 +16,12 @@ interface GroupeMembre {
 interface GroupeData {
   id: string;
   nom: string;
-  rapporteur_id: string;
-  parcours_id: string;
+  rapporteur_id: string | null;
+  parcours_id: string | null;
   parcours: {
     id: string;
     nom: string;
-  };
+  } | null;
   groupe_membres: GroupeMembre[];
   suivi_groupe_module: Array<{
     module_id: string;
@@ -53,7 +53,8 @@ export function EtudiantGroupeCard({ groupe, userId, moduleActuel }: EtudiantGro
   ).length || 0;
   const progression = totalModules > 0 ? Math.round((modulesValides / totalModules) * 100) : 0;
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null) => {
+    if (!name) return "??";
     return name
       .split(" ")
       .map((n) => n[0])
