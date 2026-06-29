@@ -163,11 +163,11 @@ function Page() {
       const { error } = await supabase.rpc("update_partenaire", {
         p_id: partenaireId,
         p_nom: formData.nom.trim(),
-        p_contact_email: formData.contact_email.trim() || null,
-        p_adresse: formData.adresse.trim() || null,
-        p_logo_url: formData.logo_url.trim() || null,
-        p_couleur_primaire: formData.couleur_primaire || null,
-        p_couleur_secondaire: formData.couleur_secondaire || null,
+        p_contact_email: formData.contact_email.trim() || undefined,
+        p_adresse: formData.adresse.trim() || undefined,
+        p_logo_url: formData.logo_url.trim() || undefined,
+        p_couleur_primaire: formData.couleur_primaire || undefined,
+        p_couleur_secondaire: formData.couleur_secondaire || undefined,
       });
 
       if (error) throw error;

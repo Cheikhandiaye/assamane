@@ -64,9 +64,9 @@ function AdminPartenaires() {
     try {
       const payload = {
         nom: formData.nom.trim(),
-        contact_email: formData.contact_email?.trim() || null,
-        adresse: formData.adresse?.trim() || null,
-        logo_url: formData.logo_url?.trim() || null,
+        contact_email: formData.contact_email?.trim() || undefined,
+        adresse: formData.adresse?.trim() || undefined,
+        logo_url: formData.logo_url?.trim() || undefined,
         couleur_primaire: formData.couleur_primaire || "#7C3AED",
         couleur_secondaire: formData.couleur_secondaire || "#F97316",
       };

@@ -100,11 +100,11 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
 
     const payload = {
       nom: form.nom.trim(),
-      logo_url: form.logo_url.trim() || null,
-      couleur_primaire: form.couleur_primaire || null,
-      couleur_secondaire: form.couleur_secondaire || null,
-      adresse: form.adresse.trim() || null,
-      contact_email: form.contact_email.trim() || null,
+      logo_url: form.logo_url.trim() || undefined,
+      couleur_primaire: form.couleur_primaire || undefined,
+      couleur_secondaire: form.couleur_secondaire || undefined,
+      adresse: form.adresse.trim() || undefined,
+      contact_email: form.contact_email.trim() || undefined,
     };
 
     try {
