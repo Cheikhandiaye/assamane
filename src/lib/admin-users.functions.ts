@@ -26,7 +26,6 @@ const createSchema = z.object({
 export const createUserFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    // Validation manuelle
     if (!data.email) throw new Error("Email requis");
     if (!data.password || data.password.length < 8) throw new Error("Mot de passe minimum 8 caractères");
     if (!data.full_name) throw new Error("Nom complet requis");
@@ -125,31 +124,51 @@ export const deleteUserFn = createServerFn({ method: "POST" })
     const userId = data.user_id;
 
     // =============================================
-    // 1. GÉRER LES DÉPENDANCES
+    // 1. RÉCUPÉRER LES GROUPES DE L'ÉTUDIANT
     // =============================================
+    
+    // Récupérer les groupes dont l'étudiant est membre
+    const { data: groupesMembre, error: gm } = await supabaseAdmin
+      .from("groupe_membres")
+      .select("groupe_id")
+      .eq("etudiant_id", userId);
 
-    // 1.1 Vérifier si l'utilisateur est rapporteur d'un groupe
+    if (gm) throw new Error(`Erreur récupération groupes: ${gm.message}`);
+
+    const groupeIds = (groupesMembre || []).map((g: any) => g.groupe_id);
+
+    // =============================================
+    // 2. GÉRER LES GROUPES (rapporteur)
+    // =============================================
+    
+    // Vérifier si l'utilisateur est rapporteur d'un groupe
     const { data: groupesRapporteur, error: g1 } = await supabaseAdmin
       .from("groupes")
-      .select("id, groupe_membres(etudiant_id)")
+      .select("id, rapporteur_id")
       .eq("rapporteur_id", userId);
 
     if (g1) throw new Error(`Erreur vérification groupes: ${g1.message}`);
 
     if (groupesRapporteur && groupesRapporteur.length > 0) {
       for (const groupe of groupesRapporteur) {
-        const autresMembres = (groupe.groupe_membres || [])
-          .filter((m: any) => m.etudiant_id !== userId)
-          .map((m: any) => m.etudiant_id);
+        // Vérifier s'il y a d'autres membres
+        const { data: autresMembres } = await supabaseAdmin
+          .from("groupe_membres")
+          .select("etudiant_id")
+          .eq("groupe_id", groupe.id)
+          .neq("etudiant_id", userId)
+          .limit(1);
 
-        if (autresMembres.length > 0) {
+        if (autresMembres && autresMembres.length > 0) {
+          // Changer le rapporteur
           const { error: updateError } = await supabaseAdmin
             .from("groupes")
-            .update({ rapporteur_id: autresMembres[0] })
+            .update({ rapporteur_id: autresMembres[0].etudiant_id })
             .eq("id", groupe.id);
           
           if (updateError) throw new Error(`Erreur changement rapporteur: ${updateError.message}`);
         } else {
+          // Supprimer le groupe (plus de membres)
           const { error: deleteError } = await supabaseAdmin
             .from("groupes")
             .delete()
@@ -160,160 +179,20 @@ export const deleteUserFn = createServerFn({ method: "POST" })
       }
     }
 
-    // 1.2 Retirer l'utilisateur des groupes (membre)
-    const { error: g2 } = await supabaseAdmin
-      .from("groupe_membres")
-      .delete()
-      .eq("etudiant_id", userId);
+    // =============================================
+    // 3. SUPPRIMER LES DONNÉES LIÉES AUX GROUPES
+    // =============================================
     
-    if (g2) throw new Error(`Erreur retrait des groupes: ${g2.message}`);
-
-    // 1.3 Supprimer les inscriptions aux parcours
-    const { error: p1 } = await supabaseAdmin
-      .from("parcours_etudiants")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (p1) throw new Error(`Erreur suppression inscriptions: ${p1.message}`);
-
-    // 1.4 Supprimer de parcours_professeurs (si professeur)
-    const { error: p2 } = await supabaseAdmin
-      .from("parcours_professeurs")
-      .delete()
-      .eq("professeur_id", userId);
-    
-    if (p2) throw new Error(`Erreur suppression parcours profs: ${p2.message}`);
-
-    // 1.5 Supprimer les sessions (si professeur)
-    const { error: s1 } = await supabaseAdmin
-      .from("sessions_cours")
-      .delete()
-      .eq("professeur_id", userId);
-    
-    if (s1) throw new Error(`Erreur suppression sessions: ${s1.message}`);
-
-    // 1.6 Supprimer les réponses individuelles
-    const { error: r1 } = await supabaseAdmin
-      .from("reponses_etudiant")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (r1) throw new Error(`Erreur suppression réponses: ${r1.message}`);
-
-    // 1.7 Supprimer les badges
-    const { error: b1 } = await supabaseAdmin
-      .from("badges_etudiants")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (b1) throw new Error(`Erreur suppression badges: ${b1.message}`);
-
-    // 1.8 Supprimer les notes quiz
-    const { error: n1 } = await supabaseAdmin
-      .from("notes_quiz")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (n1) throw new Error(`Erreur suppression notes quiz: ${n1.message}`);
-
-    // 1.9 Supprimer les notes carnet
-    const { error: n2 } = await supabaseAdmin
-      .from("notes_carnet")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (n2) throw new Error(`Erreur suppression notes carnet: ${n2.message}`);
-
-    // 1.10 Supprimer les notes finales
-    const { error: n3 } = await supabaseAdmin
-      .from("notes_finales_module")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (n3) throw new Error(`Erreur suppression notes finales: ${n3.message}`);
-
-    // 1.11 Supprimer les notifications
-    const { error: notif } = await supabaseAdmin
-      .from("notifications")
-      .delete()
-      .eq("destinataire_id", userId);
-    
-    if (notif) throw new Error(`Erreur suppression notifications: ${notif.message}`);
-
-    // 1.12 Supprimer les connexions (streak)
-    const { error: c1 } = await supabaseAdmin
-      .from("connexions")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (c1) throw new Error(`Erreur suppression connexions: ${c1.message}`);
-
-    // 1.13 Supprimer XP
-    const { error: x1 } = await supabaseAdmin
-      .from("xp_etudiants")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (x1) throw new Error(`Erreur suppression XP: ${x1.message}`);
-
-    // 1.14 Supprimer les accès module
-    const { error: a1 } = await supabaseAdmin
-      .from("acces_module")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (a1) throw new Error(`Erreur suppression accès: ${a1.message}`);
-
-    // 1.15 Supprimer le suivi contenu
-    const { error: sc } = await supabaseAdmin
-      .from("suivi_contenu")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (sc) throw new Error(`Erreur suppression suivi: ${sc.message}`);
-
-    // 1.16 Supprimer les demandes de prolongation
-    const { error: d1 } = await supabaseAdmin
-      .from("demandes_prolongation")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (d1) throw new Error(`Erreur suppression prolongations: ${d1.message}`);
-
-    // 1.17 Supprimer les présences
-    const { error: pr } = await supabaseAdmin
-      .from("presences")
-      .delete()
-      .eq("etudiant_id", userId);
-    
-    if (pr) throw new Error(`Erreur suppression présences: ${pr.message}`);
-
-    // 1.18 Supprimer les réponses de groupe (via le groupe)
-    // On récupère d'abord les groupes dont l'utilisateur fait partie
-    const { data: groupesMembre, error: gm } = await supabaseAdmin
-      .from("groupe_membres")
-      .select("groupe_id")
-      .eq("etudiant_id", userId);
-
-    if (gm) throw new Error(`Erreur récupération groupes: ${gm.message}`);
-
-    if (groupesMembre && groupesMembre.length > 0) {
-      const groupeIds = groupesMembre.map((g: any) => g.groupe_id);
-      
-      // Supprimer les réponses de groupe pour tous les groupes de l'utilisateur
-      // Note : reponses_groupe n'a pas de colonne etudiant_id, elle est liée au groupe
+    if (groupeIds.length > 0) {
+      // 3.1 Supprimer les réponses de groupe
       const { error: r2 } = await supabaseAdmin
         .from("reponses_groupe")
         .delete()
         .in("groupe_id", groupeIds);
       
       if (r2) throw new Error(`Erreur suppression réponses groupe: ${r2.message}`);
-    }
 
-    // 1.19 Supprimer le suivi_groupe_module (via le groupe)
-    if (groupesMembre && groupesMembre.length > 0) {
-      const groupeIds = groupesMembre.map((g: any) => g.groupe_id);
-      
+      // 3.2 Supprimer le suivi des modules de groupe
       const { error: sgm } = await supabaseAdmin
         .from("suivi_groupe_module")
         .delete()
@@ -322,11 +201,147 @@ export const deleteUserFn = createServerFn({ method: "POST" })
       if (sgm) throw new Error(`Erreur suppression suivi groupe: ${sgm.message}`);
     }
 
+    // 3.3 Retirer l'étudiant des groupes (membre)
+    const { error: g2 } = await supabaseAdmin
+      .from("groupe_membres")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (g2) throw new Error(`Erreur retrait des groupes: ${g2.message}`);
+
     // =============================================
-    // 2. SUPPRIMER LE PROFIL ET LE RÔLE
+    // 4. SUPPRIMER LES DEMANDES DE PROLONGATION
+    // =============================================
+    // Note: la colonne s'appelle "demandee_par" et non "etudiant_id"
+    const { error: d1 } = await supabaseAdmin
+      .from("demandes_prolongation")
+      .delete()
+      .eq("demandee_par", userId);
+    
+    if (d1) throw new Error(`Erreur suppression prolongations: ${d1.message}`);
+
+    // =============================================
+    // 5. SUPPRIMER LES AUTRES DONNÉES
     // =============================================
 
-    // 2.1 Supprimer le rôle
+    // 5.1 Supprimer les inscriptions aux parcours
+    const { error: p1 } = await supabaseAdmin
+      .from("parcours_etudiants")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (p1) throw new Error(`Erreur suppression inscriptions: ${p1.message}`);
+
+    // 5.2 Supprimer de parcours_professeurs (si professeur)
+    const { error: p2 } = await supabaseAdmin
+      .from("parcours_professeurs")
+      .delete()
+      .eq("professeur_id", userId);
+    
+    if (p2) throw new Error(`Erreur suppression parcours profs: ${p2.message}`);
+
+    // 5.3 Supprimer les sessions (si professeur)
+    const { error: s1 } = await supabaseAdmin
+      .from("sessions_cours")
+      .delete()
+      .eq("professeur_id", userId);
+    
+    if (s1) throw new Error(`Erreur suppression sessions: ${s1.message}`);
+
+    // 5.4 Supprimer les réponses individuelles
+    const { error: r1 } = await supabaseAdmin
+      .from("reponses_etudiant")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (r1) throw new Error(`Erreur suppression réponses: ${r1.message}`);
+
+    // 5.5 Supprimer les badges
+    const { error: b1 } = await supabaseAdmin
+      .from("badges_etudiants")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (b1) throw new Error(`Erreur suppression badges: ${b1.message}`);
+
+    // 5.6 Supprimer les notes quiz
+    const { error: n1 } = await supabaseAdmin
+      .from("notes_quiz")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (n1) throw new Error(`Erreur suppression notes quiz: ${n1.message}`);
+
+    // 5.7 Supprimer les notes carnet
+    const { error: n2 } = await supabaseAdmin
+      .from("notes_carnet")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (n2) throw new Error(`Erreur suppression notes carnet: ${n2.message}`);
+
+    // 5.8 Supprimer les notes finales
+    const { error: n3 } = await supabaseAdmin
+      .from("notes_finales_module")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (n3) throw new Error(`Erreur suppression notes finales: ${n3.message}`);
+
+    // 5.9 Supprimer les notifications
+    // Note: la colonne s'appelle "destinataire_id" et non "etudiant_id"
+    const { error: notif } = await supabaseAdmin
+      .from("notifications")
+      .delete()
+      .eq("destinataire_id", userId);
+    
+    if (notif) throw new Error(`Erreur suppression notifications: ${notif.message}`);
+
+    // 5.10 Supprimer les connexions (streak)
+    const { error: c1 } = await supabaseAdmin
+      .from("connexions")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (c1) throw new Error(`Erreur suppression connexions: ${c1.message}`);
+
+    // 5.11 Supprimer XP
+    const { error: x1 } = await supabaseAdmin
+      .from("xp_etudiants")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (x1) throw new Error(`Erreur suppression XP: ${x1.message}`);
+
+    // 5.12 Supprimer les accès module
+    const { error: a1 } = await supabaseAdmin
+      .from("acces_module")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (a1) throw new Error(`Erreur suppression accès: ${a1.message}`);
+
+    // 5.13 Supprimer le suivi contenu
+    const { error: sc } = await supabaseAdmin
+      .from("suivi_contenu")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (sc) throw new Error(`Erreur suppression suivi: ${sc.message}`);
+
+    // 5.14 Supprimer les présences
+    const { error: pr } = await supabaseAdmin
+      .from("presences")
+      .delete()
+      .eq("etudiant_id", userId);
+    
+    if (pr) throw new Error(`Erreur suppression présences: ${pr.message}`);
+
+    // =============================================
+    // 6. SUPPRIMER LE PROFIL ET LE RÔLE
+    // =============================================
+
+    // 6.1 Supprimer le rôle
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .delete()
@@ -334,7 +349,7 @@ export const deleteUserFn = createServerFn({ method: "POST" })
 
     if (roleError) throw new Error(`Erreur suppression rôle: ${roleError.message}`);
 
-    // 2.2 Supprimer le profil
+    // 6.2 Supprimer le profil
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .delete()
@@ -343,7 +358,7 @@ export const deleteUserFn = createServerFn({ method: "POST" })
     if (profileError) throw new Error(`Erreur suppression profil: ${profileError.message}`);
 
     // =============================================
-    // 3. SUPPRIMER DE AUTH.USERS
+    // 7. SUPPRIMER DE AUTH.USERS
     // =============================================
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
