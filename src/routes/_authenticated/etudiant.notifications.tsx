@@ -12,10 +12,10 @@ export const Route = createFileRoute("/_authenticated/etudiant/notifications")({
 });
 
 function Page() {
+  // ✅ TOUS LES HOOKS EN PREMIER
   useRoleGuard("etudiant");
   const { user } = useCurrentUser();
   
-  // Hook avec gestion d'erreur et chargement
   const { 
     notifications, 
     unreadCount, 
@@ -25,14 +25,7 @@ function Page() {
     error 
   } = useNotifications(user?.id);
 
-  // Debug : afficher les données dans la console
-  console.log("🔔 Page Notifications - user:", user?.id);
-  console.log("🔔 Page Notifications - isLoading:", isLoading);
-  console.log("🔔 Page Notifications - error:", error);
-  console.log("🔔 Page Notifications - notifications:", notifications);
-  console.log("🔔 Page Notifications - unreadCount:", unreadCount);
-
-  // Vérifier que user existe
+  // ✅ MAINTENANT on peut faire des retours conditionnels
   if (!user) {
     return (
       <AssirikShell title="🔔 Notifications">
@@ -53,9 +46,7 @@ function Page() {
     );
   }
 
-  // Si erreur du hook
   if (error) {
-    console.error("🔔 Erreur hook notifications:", error);
     return (
       <AssirikShell title="🔔 Notifications">
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -75,7 +66,6 @@ function Page() {
     );
   }
 
-  // Si chargement
   if (isLoading) {
     return (
       <AssirikShell title="🔔 Notifications">
@@ -87,14 +77,12 @@ function Page() {
     );
   }
 
-  // Sécuriser l'accès aux notifications
   const safeNotifications = notifications || [];
   const safeUnreadCount = unreadCount || 0;
 
   return (
     <AssirikShell title="🔔 Notifications">
       <div className="space-y-4">
-        {/* En-tête */}
         <div className="mb-4 flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
             {safeUnreadCount} non lue{safeUnreadCount > 1 ? "s" : ""}
@@ -107,7 +95,6 @@ function Page() {
           )}
         </div>
 
-        {/* Liste des notifications */}
         {safeNotifications.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
             <Bell className="mx-auto mb-2 h-12 w-12 text-muted-foreground/30" />
@@ -117,7 +104,6 @@ function Page() {
         ) : (
           <ul className="space-y-2">
             {safeNotifications.map((n) => {
-              // Sécuriser chaque notification
               const isLu = n?.lu ?? true;
               const titre = n?.titre || "Notification";
               const message = n?.message || "";
