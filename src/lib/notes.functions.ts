@@ -7,18 +7,16 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const submitQuizNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }: { context: any; data: any }) => {
-    const { etudiant_id, module_id, parcours_id, tentative, note, temps_utilise } = data;
-    
-    // Vérifier que l'utilisateur est autorisé
-    const { data: userRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .single();
-
-    if (userRole?.role === "etudiant" && context.userId !== etudiant_id) {
-      throw new Error("Non autorisé à soumettre la note d'un autre étudiant");
-    }
+    const { contenu_id, module_id, parcours_id, tentative, answers, temps_utilise } = data as {
+      contenu_id: string;
+      module_id: string;
+      parcours_id: string;
+      tentative: number;
+      answers: Record<string, number>;
+      temps_utilise?: number;
+    };
+    // Étudiant authentifié uniquement — on ignore tout etudiant_id côté client.
+    const etudiant_id = context.userId;
 
     // Vérifier le nombre de tentatives max (2)
     const { count } = await supabaseAdmin
@@ -32,16 +30,35 @@ export const submitQuizNote = createServerFn({ method: "POST" })
       throw new Error("Nombre maximum de tentatives atteint (2)");
     }
 
-    // Calculer la note avec pénalité si 2e essai
-    let note_finale = note;
+    // Récupérer les questions du quiz côté serveur — jamais de note fournie par le client.
+    const { data: contenu, error: contenuError } = await supabaseAdmin
+      .from("contenus_module")
+      .select("quiz_questions, module_id, type")
+      .eq("id", contenu_id)
+      .single();
+
+    if (contenuError || !contenu || contenu.type !== "quiz" || contenu.module_id !== module_id) {
+      throw new Error("Quiz introuvable");
+    }
+
+    const questions = (contenu.quiz_questions as Array<{ correct: number }>) ?? [];
+    if (!questions.length) throw new Error("Quiz sans question");
+
+    let correct = 0;
+    questions.forEach((q, i) => {
+      if (answers && answers[String(i)] === q.correct) correct++;
+    });
+    let note_finale = Math.round((correct / questions.length) * 100);
+
+    // Pénalité si 2e essai
     if (tentative === 2) {
       const { data: module } = await supabaseAdmin
         .from("modules_cours")
         .select("penalite_deuxieme_essai")
         .eq("id", module_id)
         .single();
-      
-      note_finale = note * (1 - (module?.penalite_deuxieme_essai || 0.25));
+
+      note_finale = note_finale * (1 - (module?.penalite_deuxieme_essai || 0.25));
     }
 
     const { data: result, error } = await supabaseAdmin
