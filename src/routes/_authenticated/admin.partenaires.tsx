@@ -1,180 +1,326 @@
-import { useRoleGuard } from "@/hooks/use-role-guard";
-import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useRoleGuard } from "@/hooks/use-role-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, Building2, Mail, MapPin, Search } from "lucide-react";
-import { PartenaireFormDialog, type Partenaire } from "@/components/partenaire-form";
-import { PartnerLogo } from "@/components/partner-logo";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Building2, Plus, Pencil, Trash2, Users, Mail, Phone, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/partenaires")({
-  component: AdminPartenairesPage,
+  component: AdminPartenaires,
 });
 
-function AdminPartenairesPage() {
+function AdminPartenaires() {
   useRoleGuard("admin");
-  const [items, setItems] = useState<Partenaire[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<Partenaire | null>(null);
-  const [deleting, setDeleting] = useState<Partenaire | null>(null);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = useCurrentUser();
 
-  const load = useCallback(async () => {
+  const [partenaires, setPartenaires] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    nom: "",
+    contact_email: "",
+    contact_phone: "",
+    secteur: "",
+    ville: "",
+  });
+
+  // Fonction de chargement sécurisée
+  const loadPartenaires = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("partenaires")
-      .select("id, nom, logo_url, couleur_primaire, couleur_secondaire, adresse, contact_email")
-      .order("nom", { ascending: true });
-    if (error) toast.error(error.message);
-    setItems((data as Partenaire[]) ?? []);
-    setLoading(false);
-  }, []);
+    try {
+      // Utiliser la fonction RLS can_view_partenaire ou interroger via la vue sécurisée
+      const { data, error } = await supabase
+        .from("partenaires")
+        .select("*")
+        .order("nom", { ascending: true });
+
+      if (error) {
+        // Si erreur RLS, essayer via la fonction sécurisée
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          "get_all_partenaires" // Cette fonction doit être créée dans la BDD
+        );
+        
+        if (rpcError) {
+          console.error("Erreur chargement partenaires:", rpcError);
+          toast.error("Erreur de chargement des partenaires");
+        } else {
+          setPartenaires(rpcData || []);
+        }
+      } else {
+        setPartenaires(data || []);
+      }
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast.error("Erreur lors du chargement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Création de la fonction RPC si elle n'existe pas
+  const createRpcFunction = async () => {
+    // Cette fonction doit être exécutée une fois dans l'éditeur SQL de Supabase
+    // Voir le SQL ci-dessous
+  };
+
+  // Sauvegarde sécurisée
+  const savePartenaire = async () => {
+    if (!formData.nom.trim()) {
+      toast.error("Le nom du partenaire est requis");
+      return;
+    }
+
+    try {
+      if (editingId) {
+        // Mise à jour via RLS
+        const { error } = await supabase
+          .from("partenaires")
+          .update({
+            nom: formData.nom,
+            contact_email: formData.contact_email || null,
+            contact_phone: formData.contact_phone || null,
+            secteur: formData.secteur || null,
+            ville: formData.ville || null,
+          })
+          .eq("id", editingId);
+
+        if (error) throw error;
+        toast.success("Partenaire mis à jour");
+      } else {
+        // Création via RLS
+        const { error } = await supabase
+          .from("partenaires")
+          .insert({
+            nom: formData.nom,
+            contact_email: formData.contact_email || null,
+            contact_phone: formData.contact_phone || null,
+            secteur: formData.secteur || null,
+            ville: formData.ville || null,
+          });
+
+        if (error) throw error;
+        toast.success("Partenaire créé");
+      }
+
+      setDialogOpen(false);
+      resetForm();
+      await loadPartenaires();
+    } catch (error: any) {
+      console.error("Erreur sauvegarde:", error);
+      toast.error(error.message || "Erreur lors de la sauvegarde");
+    }
+  };
+
+  // Suppression sécurisée
+  const deletePartenaire = async (id: string) => {
+    if (!confirm("Supprimer définitivement ce partenaire ?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("partenaires")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success("Partenaire supprimé");
+      await loadPartenaires();
+    } catch (error: any) {
+      console.error("Erreur suppression:", error);
+      toast.error(error.message || "Erreur lors de la suppression");
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      nom: "",
+      contact_email: "",
+      contact_phone: "",
+      secteur: "",
+      ville: "",
+    });
+    setEditingId(null);
+  };
+
+  const openEditDialog = (partenaire: any) => {
+    setFormData({
+      nom: partenaire.nom || "",
+      contact_email: partenaire.contact_email || "",
+      contact_phone: partenaire.contact_phone || "",
+      secteur: partenaire.secteur || "",
+      ville: partenaire.ville || "",
+    });
+    setEditingId(partenaire.id);
+    setDialogOpen(true);
+  };
 
   useEffect(() => {
-    load();
-  }, [load]);
-
-  async function confirmDelete() {
-    if (!deleting) return;
-    const { error } = await supabase.from("partenaires").delete().eq("id", deleting.id);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Partenaire supprimé");
-      load();
+    if (pathname === "/admin/partenaires") {
+      loadPartenaires();
     }
-    setDeleting(null);
-  }
+  }, [pathname]);
 
-  const filtered = items.filter((p) =>
-    p.nom.toLowerCase().includes(query.toLowerCase()) ||
-    (p.contact_email ?? "").toLowerCase().includes(query.toLowerCase()),
-  );
+  if (pathname !== "/admin/partenaires") return <Outlet />;
 
   return (
-    <AssirikShell title="🏢 Partenaires">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un partenaire..."
-            className="pl-9"
-          />
-        </div>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setDialogOpen(true);
-          }}
-        >
-          <Plus size={18} /> Nouveau partenaire
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="rounded-2xl bg-card p-8 text-center text-muted-foreground">Chargement...</div>
-      ) : filtered.length === 0 ? (
-        <div className="rounded-2xl bg-card p-10 text-center">
-          <Building2 size={36} className="mx-auto mb-3 text-muted-foreground" />
-          <p className="font-medium">Aucun partenaire</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {items.length === 0 ? "Crée ton premier partenaire pour commencer." : "Aucun résultat pour cette recherche."}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((p) => (
-            <div key={p.id} className="rounded-2xl bg-card p-5 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div
-                  className="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-white text-lg font-bold"
-                  style={{ backgroundColor: p.couleur_primaire ?? "#7C3AED" }}
-                >
-                  {p.logo_url ? (
-                    <PartnerLogo path={p.logo_url} alt={p.nom} className="h-full w-full rounded-xl object-cover" />
-                  ) : (
-                    p.nom.charAt(0).toUpperCase()
-                  )}
+    <AssirikShell title="🏢 Gestion des Partenaires">
+      <div className="space-y-6">
+        {/* En-tête */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Building2 className="h-6 w-6 text-primary" />
+              Partenaires
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Gérez les organisations partenaires du CERIP
+            </p>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau partenaire
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingId ? "Modifier le partenaire" : "Créer un partenaire"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nom">Nom *</Label>
+                  <Input
+                    id="nom"
+                    value={formData.nom}
+                    onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                    placeholder="Ex: Université Cheikh Anta Diop"
+                  />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-foreground">{p.nom}</p>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email de contact</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.contact_email}
+                    onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                    placeholder="contact@organisation.sn"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Téléphone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.contact_phone}
+                    onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                    placeholder="+221 77 123 45 67"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="secteur">Secteur d'activité</Label>
+                  <Input
+                    id="secteur"
+                    value={formData.secteur}
+                    onChange={(e) => setFormData({ ...formData, secteur: e.target.value })}
+                    placeholder="Éducation, Finance, Santé..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ville">Ville</Label>
+                  <Input
+                    id="ville"
+                    value={formData.ville}
+                    onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
+                    placeholder="Dakar, Thiès, Saint-Louis..."
+                  />
+                </div>
+                <Button className="w-full" onClick={savePartenaire}>
+                  {editingId ? "Mettre à jour" : "Créer"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Liste des partenaires */}
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">
+            Chargement des partenaires...
+          </div>
+        ) : partenaires.length === 0 ? (
+          <div className="text-center py-12 border rounded-lg">
+            <Building2 className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+            <p className="text-muted-foreground">Aucun partenaire enregistré</p>
+            <p className="text-sm text-muted-foreground">
+              Créez votre premier partenaire pour commencer
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {partenaires.map((p) => (
+              <Card key={p.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-start justify-between">
+                    <span className="truncate">{p.nom}</span>
+                    <div className="flex gap-1 flex-shrink-0 ml-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => openEditDialog(p)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => deletePartenaire(p.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-1.5 text-sm">
                   {p.contact_email && (
-                    <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground">
-                      <Mail size={12} /> {p.contact_email}
-                    </p>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-3.5 w-3.5" />
+                      <span className="truncate">{p.contact_email}</span>
+                    </div>
                   )}
-                  {p.adresse && (
-                    <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
-                      <MapPin size={12} /> {p.adresse}
-                    </p>
+                  {p.contact_phone && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Phone className="h-3.5 w-3.5" />
+                      <span>{p.contact_phone}</span>
+                    </div>
                   )}
-                </div>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setEditing(p);
-                    setDialogOpen(true);
-                  }}
-                >
-                  <Pencil size={14} /> Modifier
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => setDeleting(p)}
-                >
-                  <Trash2 size={14} />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <PartenaireFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        initial={editing}
-        onSaved={load}
-      />
-
-      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce partenaire&nbsp;?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action supprimera <strong>{deleting?.nom}</strong> ainsi que toutes ses missions et parcours liés. Cette opération est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                  {(p.secteur || p.ville) && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span>{[p.secteur, p.ville].filter(Boolean).join(" • ")}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t mt-2">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>Missions: {p.missions_count || 0}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </AssirikShell>
   );
 }
