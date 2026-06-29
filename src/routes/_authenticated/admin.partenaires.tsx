@@ -28,51 +28,31 @@ function AdminPartenaires() {
   const [formData, setFormData] = useState({
     nom: "",
     contact_email: "",
-    contact_phone: "",
+    contact_telephone: "",  // ← CORRIGÉ : contact_telephone au lieu de contact_phone
     secteur: "",
     ville: "",
   });
 
-  // Fonction de chargement sécurisée
+  // Fonction de chargement
   const loadPartenaires = async () => {
     setLoading(true);
     try {
-      // Utiliser la fonction RLS can_view_partenaire ou interroger via la vue sécurisée
       const { data, error } = await supabase
         .from("partenaires")
         .select("*")
         .order("nom", { ascending: true });
 
-      if (error) {
-        // Si erreur RLS, essayer via la fonction sécurisée
-        const { data: rpcData, error: rpcError } = await supabase.rpc(
-          "get_all_partenaires" // Cette fonction doit être créée dans la BDD
-        );
-        
-        if (rpcError) {
-          console.error("Erreur chargement partenaires:", rpcError);
-          toast.error("Erreur de chargement des partenaires");
-        } else {
-          setPartenaires(rpcData || []);
-        }
-      } else {
-        setPartenaires(data || []);
-      }
-    } catch (error) {
-      console.error("Erreur:", error);
-      toast.error("Erreur lors du chargement");
+      if (error) throw error;
+      setPartenaires(data || []);
+    } catch (error: any) {
+      console.error("Erreur chargement partenaires:", error);
+      toast.error(error.message || "Erreur de chargement des partenaires");
     } finally {
       setLoading(false);
     }
   };
 
-  // Création de la fonction RPC si elle n'existe pas
-  const createRpcFunction = async () => {
-    // Cette fonction doit être exécutée une fois dans l'éditeur SQL de Supabase
-    // Voir le SQL ci-dessous
-  };
-
-  // Sauvegarde sécurisée
+  // Sauvegarde
   const savePartenaire = async () => {
     if (!formData.nom.trim()) {
       toast.error("Le nom du partenaire est requis");
@@ -80,32 +60,26 @@ function AdminPartenaires() {
     }
 
     try {
+      const payload = {
+        nom: formData.nom.trim(),
+        contact_email: formData.contact_email?.trim() || null,
+        contact_telephone: formData.contact_telephone?.trim() || null,  // ← CORRIGÉ
+        secteur: formData.secteur?.trim() || null,
+        ville: formData.ville?.trim() || null,
+      };
+
       if (editingId) {
-        // Mise à jour via RLS
         const { error } = await supabase
           .from("partenaires")
-          .update({
-            nom: formData.nom,
-            contact_email: formData.contact_email || null,
-            contact_phone: formData.contact_phone || null,
-            secteur: formData.secteur || null,
-            ville: formData.ville || null,
-          })
+          .update(payload)
           .eq("id", editingId);
 
         if (error) throw error;
         toast.success("Partenaire mis à jour");
       } else {
-        // Création via RLS
         const { error } = await supabase
           .from("partenaires")
-          .insert({
-            nom: formData.nom,
-            contact_email: formData.contact_email || null,
-            contact_phone: formData.contact_phone || null,
-            secteur: formData.secteur || null,
-            ville: formData.ville || null,
-          });
+          .insert(payload);
 
         if (error) throw error;
         toast.success("Partenaire créé");
@@ -120,7 +94,7 @@ function AdminPartenaires() {
     }
   };
 
-  // Suppression sécurisée
+  // Suppression
   const deletePartenaire = async (id: string) => {
     if (!confirm("Supprimer définitivement ce partenaire ?")) return;
 
@@ -143,7 +117,7 @@ function AdminPartenaires() {
     setFormData({
       nom: "",
       contact_email: "",
-      contact_phone: "",
+      contact_telephone: "",  // ← CORRIGÉ
       secteur: "",
       ville: "",
     });
@@ -154,7 +128,7 @@ function AdminPartenaires() {
     setFormData({
       nom: partenaire.nom || "",
       contact_email: partenaire.contact_email || "",
-      contact_phone: partenaire.contact_phone || "",
+      contact_telephone: partenaire.contact_telephone || "",  // ← CORRIGÉ
       secteur: partenaire.secteur || "",
       ville: partenaire.ville || "",
     });
@@ -218,11 +192,11 @@ function AdminPartenaires() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone</Label>
+                  <Label htmlFor="telephone">Téléphone</Label>
                   <Input
-                    id="phone"
-                    value={formData.contact_phone}
-                    onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                    id="telephone"
+                    value={formData.contact_telephone}  // ← CORRIGÉ
+                    onChange={(e) => setFormData({ ...formData, contact_telephone: e.target.value })}
                     placeholder="+221 77 123 45 67"
                   />
                 </div>
@@ -299,10 +273,10 @@ function AdminPartenaires() {
                       <span className="truncate">{p.contact_email}</span>
                     </div>
                   )}
-                  {p.contact_phone && (
+                  {p.contact_telephone && (  // ← CORRIGÉ
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Phone className="h-3.5 w-3.5" />
-                      <span>{p.contact_phone}</span>
+                      <span>{p.contact_telephone}</span>  {/* ← CORRIGÉ */}
                     </div>
                   )}
                   {(p.secteur || p.ville) && (
