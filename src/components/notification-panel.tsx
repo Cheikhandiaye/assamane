@@ -1,93 +1,83 @@
-import { Bell, X } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useNotifications, type AppNotification } from "@/hooks/use-notifications";
-import { cn } from "@/lib/utils";
+// src/components/notification-panel.tsx
+import { useState, useEffect, useRef } from "react";
+import { Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/use-notifications";
+import { Link } from "@tanstack/react-router";
 
-const ICONS: Record<string, string> = {
-  validation: "✅",
-  rejet: "❌",
-  badge: "🏆",
-  acces_debloque: "🔓",
-  alerte_echeance: "⏰",
-  info: "ℹ️",
-};
+interface NotificationBellProps {
+  userId: string | undefined;
+}
 
-export function NotificationBell({ userId }: { userId: string | undefined }) {
+export function NotificationBell({ userId }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(userId);
-  const navigate = useNavigate();
+  // ✅ Utiliser un channel séparé en passant un flag
+  const { notifications, unreadCount, markAsRead } = useNotifications(userId);
+  const isMountedRef = useRef(true);
 
-  function handleClick(n: AppNotification) {
-    if (!n.lu) void markAsRead(n.id);
-    if (n.lien) {
-      setOpen(false);
-      navigate({ to: n.lien });
-    }
-  }
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  if (!userId) return null;
+
+  const latestNotifications = notifications.slice(0, 5);
 
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground hover:bg-muted transition-colors"
-        aria-label="Notifications"
-      >
-        <Bell size={20} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </button>
-      {open && (
-        <div className="fixed inset-0 z-50 flex" onClick={() => setOpen(false)}>
-          <div className="flex-1 bg-black/40" />
-          <aside
-            onClick={(e) => e.stopPropagation()}
-            className="h-full w-full max-w-[380px] bg-background shadow-2xl flex flex-col"
-          >
-            <header className="flex items-center justify-between border-b border-border px-5 py-4">
-              <h2 className="text-lg font-bold">Notifications 🔔</h2>
-              <button onClick={() => setOpen(false)} className="rounded-full p-1 hover:bg-muted">
-                <X size={18} />
-              </button>
-            </header>
-            {notifications.length > 0 && (
-              <button
-                onClick={() => void markAllAsRead()}
-                className="px-5 py-2 text-left text-xs font-medium text-primary hover:underline"
-              >
-                Tout marquer comme lu
-              </button>
-            )}
-            <div className="flex-1 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <p className="px-5 py-10 text-center text-sm text-muted-foreground">Aucune notification 🤷</p>
-              ) : (
-                notifications.map((n) => (
-                  <button
-                    key={n.id}
-                    onClick={() => handleClick(n)}
-                    className={cn(
-                      "block w-full border-b border-border px-5 py-3 text-left transition-colors hover:bg-muted/60",
-                      !n.lu && "bg-secondary",
-                    )}
-                  >
-                    <p className="text-sm font-semibold text-foreground">
-                      {ICONS[n.type] ?? "•"} {n.titre}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{n.message}</p>
-                    <p className="mt-1 text-[10px] text-muted-foreground">
-                      {new Date(n.created_at).toLocaleString("fr-FR")}
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          </aside>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="p-3 border-b">
+          <h4 className="font-semibold text-sm">Notifications</h4>
         </div>
-      )}
-    </>
+        <div className="max-h-64 overflow-y-auto p-2">
+          {latestNotifications.length === 0 ? (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              Aucune notification
+            </div>
+          ) : (
+            latestNotifications.map((n) => (
+              <div
+                key={n.id}
+                className={`p-2 rounded-lg text-sm ${!n.lu ? "bg-primary/5" : ""}`}
+              >
+                <p className="font-medium">{n.titre}</p>
+                <p className="text-xs text-muted-foreground">{n.message}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {new Date(n.created_at).toLocaleString("fr-FR")}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="p-2 border-t text-center">
+          <Link
+            to="/etudiant/notifications"
+            className="text-sm text-primary hover:underline"
+            onClick={() => setOpen(false)}
+          >
+            Voir toutes les notifications
+          </Link>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
