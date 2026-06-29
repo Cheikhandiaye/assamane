@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AssirikShell } from "@/components/assirik-shell";
 import { useRoleGuard } from "@/hooks/use-role-guard";
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/professeur/parcours")({ co
 
 function Page() {
   useRoleGuard("professeur");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUser();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +18,10 @@ function Page() {
     const { data } = await supabase.from("parcours_professeurs").select("modules_assignes, parcours!inner(id, nom, description, missions(nom, partenaires(nom)))").eq("professeur_id", user.id);
     setRows(data ?? []); setLoading(false);
   })(); }, [user?.id]);
+
+  // Si on est sur un parcours précis (/professeur/parcours/<id>), laisser la route enfant s'afficher
+  if (pathname !== "/professeur/parcours") return <Outlet />;
+
   return (
     <AssirikShell title="📘 Mes parcours">
       {loading ? <Loader2 className="mx-auto animate-spin text-primary" /> : (
