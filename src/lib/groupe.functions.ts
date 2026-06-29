@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 // === CRÉER UN GROUPE ===
 export const createGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { nom, parcours_id, etudiant_ids, rapporteur_id } = data;
 
@@ -82,6 +83,7 @@ export const createGroupe = createServerFn({ method: "POST" })
 // === METTRE À JOUR LE RAPPORTEUR ===
 export const updateGroupeRapporteur = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, rapporteur_id } = data;
 
@@ -112,6 +114,7 @@ export const updateGroupeRapporteur = createServerFn({ method: "POST" })
 // === AJOUTER UN MEMBRE AU GROUPE ===
 export const addMembreToGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, etudiant_id } = data;
 
@@ -141,6 +144,7 @@ export const addMembreToGroupe = createServerFn({ method: "POST" })
 // === RETIRER UN MEMBRE DU GROUPE ===
 export const removeMembreFromGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, etudiant_id } = data;
 
@@ -172,6 +176,7 @@ export const removeMembreFromGroupe = createServerFn({ method: "POST" })
 // === RÉCUPÉRER LES GROUPES D'UN PROFESSEUR ===
 export const getProfessorGroupes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ context }: { context: any }) => {
     const { data: userRole } = await supabaseAdmin
       .from("user_roles")
@@ -257,6 +262,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
 // === RÉCUPÉRER LE GROUPE D'UN ÉTUDIANT ===
 export const getStudentGroupe = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { parcours_id } = data || {};
 
@@ -298,6 +304,7 @@ export const getStudentGroupe = createServerFn({ method: "GET" })
 // === SOUMETTRE UN CARNET DE GROUPE ===
 export const submitGroupeCarnet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, module_id, etape_id, parcours_id, contenu } = data;
 

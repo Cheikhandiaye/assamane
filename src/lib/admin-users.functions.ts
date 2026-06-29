@@ -25,6 +25,7 @@ const createSchema = z.object({
 
 export const createUserFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ data, context }) => {
     if (!data.email) throw new Error("Email requis");
     if (!data.password || data.password.length < 8) throw new Error("Mot de passe minimum 8 caractères");
@@ -76,6 +77,7 @@ const updateSchema = z.object({
 
 export const updateUserFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ data, context }) => {
     if (!data.user_id) throw new Error("ID utilisateur requis");
 
@@ -114,6 +116,7 @@ const deleteSchema = z.object({ user_id: z.string().uuid() });
 
 export const deleteUserFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ data, context }) => {
     if (!data.user_id) throw new Error("ID utilisateur requis");
 
