@@ -13,32 +13,58 @@ export async function fetchUsersByRole(
   role: "etudiant" | "professeur" | "partenaire" | "admin",
   withCreatedAt = false,
 ): Promise<RoleUser[]> {
-  const { data: roles } = await supabase
+  const { data: roles, error: rolesError } = await supabase
     .from("user_roles")
     .select("user_id")
     .eq("role", role);
+
+  if (rolesError) {
+    console.error("Erreur fetch user_roles:", rolesError);
+    return [];
+  }
+
   const ids = (roles ?? []).map((r) => r.user_id);
   if (!ids.length) return [];
+
   const cols = withCreatedAt ? "id, full_name, email, created_at" : "id, full_name, email";
-  const { data: profs } = await supabase
+  const { data: profs, error: profsError } = await supabase
     .from("profiles")
-    .select("id, full_name, email, created_at")
+    .select(cols)
     .in("id", ids);
+
+  if (profsError) {
+    console.error("Erreur fetch profiles:", profsError);
+    return [];
+  }
+
   return (profs ?? []) as RoleUser[];
 }
 
 // Étudiants rattachés à un partenaire donné (rôle etudiant ET profiles.partenaire_id = X).
 export async function fetchStudentsByPartner(partenaireId: string): Promise<RoleUser[]> {
-  const { data: roles } = await supabase
+  const { data: roles, error: rolesError } = await supabase
     .from("user_roles")
     .select("user_id")
     .eq("role", "etudiant");
+
+  if (rolesError) {
+    console.error("Erreur fetch user_roles:", rolesError);
+    return [];
+  }
+
   const ids = (roles ?? []).map((r) => r.user_id);
   if (!ids.length) return [];
-  const { data: profs } = await supabase
+
+  const { data: profs, error: profsError } = await supabase
     .from("profiles")
     .select("id, full_name, email")
     .in("id", ids)
     .eq("partenaire_id", partenaireId);
+
+  if (profsError) {
+    console.error("Erreur fetch profiles:", profsError);
+    return [];
+  }
+
   return (profs ?? []) as RoleUser[];
 }
