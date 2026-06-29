@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Users, Mail, Phone, MapPin } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Mail, MapPin, Palette, Link, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/partenaires")({
   component: AdminPartenaires,
@@ -28,12 +29,13 @@ function AdminPartenaires() {
   const [formData, setFormData] = useState({
     nom: "",
     contact_email: "",
-    contact_telephone: "",  // ← CORRIGÉ : contact_telephone au lieu de contact_phone
-    secteur: "",
-    ville: "",
+    adresse: "",
+    logo_url: "",
+    couleur_primaire: "#7C3AED",
+    couleur_secondaire: "#F97316",
   });
 
-  // Fonction de chargement
+  // Chargement
   const loadPartenaires = async () => {
     setLoading(true);
     try {
@@ -63,9 +65,10 @@ function AdminPartenaires() {
       const payload = {
         nom: formData.nom.trim(),
         contact_email: formData.contact_email?.trim() || null,
-        contact_telephone: formData.contact_telephone?.trim() || null,  // ← CORRIGÉ
-        secteur: formData.secteur?.trim() || null,
-        ville: formData.ville?.trim() || null,
+        adresse: formData.adresse?.trim() || null,
+        logo_url: formData.logo_url?.trim() || null,
+        couleur_primaire: formData.couleur_primaire || "#7C3AED",
+        couleur_secondaire: formData.couleur_secondaire || "#F97316",
       };
 
       if (editingId) {
@@ -79,7 +82,10 @@ function AdminPartenaires() {
       } else {
         const { error } = await supabase
           .from("partenaires")
-          .insert(payload);
+          .insert({
+            ...payload,
+            created_by: user?.id,
+          });
 
         if (error) throw error;
         toast.success("Partenaire créé");
@@ -117,9 +123,10 @@ function AdminPartenaires() {
     setFormData({
       nom: "",
       contact_email: "",
-      contact_telephone: "",  // ← CORRIGÉ
-      secteur: "",
-      ville: "",
+      adresse: "",
+      logo_url: "",
+      couleur_primaire: "#7C3AED",
+      couleur_secondaire: "#F97316",
     });
     setEditingId(null);
   };
@@ -128,9 +135,10 @@ function AdminPartenaires() {
     setFormData({
       nom: partenaire.nom || "",
       contact_email: partenaire.contact_email || "",
-      contact_telephone: partenaire.contact_telephone || "",  // ← CORRIGÉ
-      secteur: partenaire.secteur || "",
-      ville: partenaire.ville || "",
+      adresse: partenaire.adresse || "",
+      logo_url: partenaire.logo_url || "",
+      couleur_primaire: partenaire.couleur_primaire || "#7C3AED",
+      couleur_secondaire: partenaire.couleur_secondaire || "#F97316",
     });
     setEditingId(partenaire.id);
     setDialogOpen(true);
@@ -165,7 +173,7 @@ function AdminPartenaires() {
                 Nouveau partenaire
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingId ? "Modifier le partenaire" : "Créer un partenaire"}
@@ -181,6 +189,7 @@ function AdminPartenaires() {
                     placeholder="Ex: Université Cheikh Anta Diop"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email de contact</Label>
                   <Input
@@ -191,33 +200,67 @@ function AdminPartenaires() {
                     placeholder="contact@organisation.sn"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="telephone">Téléphone</Label>
-                  <Input
-                    id="telephone"
-                    value={formData.contact_telephone}  // ← CORRIGÉ
-                    onChange={(e) => setFormData({ ...formData, contact_telephone: e.target.value })}
-                    placeholder="+221 77 123 45 67"
+                  <Label htmlFor="adresse">Adresse</Label>
+                  <Textarea
+                    id="adresse"
+                    value={formData.adresse}
+                    onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
+                    placeholder="Adresse complète de l'organisation"
+                    rows={2}
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="secteur">Secteur d'activité</Label>
+                  <Label htmlFor="logo">URL du logo</Label>
                   <Input
-                    id="secteur"
-                    value={formData.secteur}
-                    onChange={(e) => setFormData({ ...formData, secteur: e.target.value })}
-                    placeholder="Éducation, Finance, Santé..."
+                    id="logo"
+                    value={formData.logo_url}
+                    onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                    placeholder="https://exemple.com/logo.png"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ville">Ville</Label>
-                  <Input
-                    id="ville"
-                    value={formData.ville}
-                    onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
-                    placeholder="Dakar, Thiès, Saint-Louis..."
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="couleur_primaire">Couleur primaire</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="couleur_primaire"
+                        type="color"
+                        value={formData.couleur_primaire}
+                        onChange={(e) => setFormData({ ...formData, couleur_primaire: e.target.value })}
+                        className="w-12 h-10 p-1"
+                      />
+                      <Input
+                        value={formData.couleur_primaire}
+                        onChange={(e) => setFormData({ ...formData, couleur_primaire: e.target.value })}
+                        placeholder="#7C3AED"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="couleur_secondaire">Couleur secondaire</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="couleur_secondaire"
+                        type="color"
+                        value={formData.couleur_secondaire}
+                        onChange={(e) => setFormData({ ...formData, couleur_secondaire: e.target.value })}
+                        className="w-12 h-10 p-1"
+                      />
+                      <Input
+                        value={formData.couleur_secondaire}
+                        onChange={(e) => setFormData({ ...formData, couleur_secondaire: e.target.value })}
+                        placeholder="#F97316"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
                 </div>
+
                 <Button className="w-full" onClick={savePartenaire}>
                   {editingId ? "Mettre à jour" : "Créer"}
                 </Button>
@@ -245,7 +288,15 @@ function AdminPartenaires() {
               <Card key={p.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-start justify-between">
-                    <span className="truncate">{p.nom}</span>
+                    <div className="flex items-center gap-2 truncate">
+                      {p.couleur_primaire && (
+                        <div 
+                          className="w-3 h-3 rounded-full flex-shrink-0" 
+                          style={{ backgroundColor: p.couleur_primaire }}
+                        />
+                      )}
+                      <span className="truncate">{p.nom}</span>
+                    </div>
                     <div className="flex gap-1 flex-shrink-0 ml-2">
                       <Button
                         variant="ghost"
@@ -273,21 +324,24 @@ function AdminPartenaires() {
                       <span className="truncate">{p.contact_email}</span>
                     </div>
                   )}
-                  {p.contact_telephone && (  // ← CORRIGÉ
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5" />
-                      <span>{p.contact_telephone}</span>  {/* ← CORRIGÉ */}
-                    </div>
-                  )}
-                  {(p.secteur || p.ville) && (
+                  {p.adresse && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="h-3.5 w-3.5" />
-                      <span>{[p.secteur, p.ville].filter(Boolean).join(" • ")}</span>
+                      <span className="truncate">{p.adresse}</span>
+                    </div>
+                  )}
+                  {p.logo_url && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Link className="h-3.5 w-3.5" />
+                      <span className="truncate text-xs">Logo présent</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t mt-2">
-                    <Users className="h-3.5 w-3.5" />
-                    <span>Missions: {p.missions_count || 0}</span>
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>
+                      Créé le {new Date(p.created_at).toLocaleDateString()}
+                      {p.created_by && ` par ${p.created_by.slice(0, 8)}...`}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
