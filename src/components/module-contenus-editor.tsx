@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, ChevronUp, ChevronDown, FileText, Video, Save, HelpCircle, Check, Download, Upload } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Loader2, Plus, Trash2, ChevronUp, ChevronDown, FileText, Video, Save, HelpCircle, Check, Download, Upload, Clock, Target, Brain } from "lucide-react";
 import { toast } from "sonner";
 
 type QuizQuestion = { question: string; options: string[]; correct: number };
@@ -21,6 +22,10 @@ type Contenu = {
   duree_video_secondes: number | null;
   quiz_questions: QuizQuestion[] | null;
   quiz_score_min: number | null;
+  quiz_duree_minutes: number | null;
+  quiz_penalite_deuxieme_essai: number | null;
+  ponderation_quiz: number | null;
+  ponderation_carnet: number | null;
   ordre: number;
 };
 
@@ -83,20 +88,52 @@ export function ModuleContenusEditor({
   const [savingId, setSavingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
+  // États pour la configuration globale du module
+  const [dureeQuiz, setDureeQuiz] = useState<number>(10);
+  const [seuilReussite, setSeuilReussite] = useState<number>(70);
+  const [penaliteDeuxiemeEssai, setPenaliteDeuxiemeEssai] = useState<number>(25);
+  const [ponderationQuiz, setPonderationQuiz] = useState<number>(60);
+  const [ponderationCarnet, setPonderationCarnet] = useState<number>(40);
+
   async function load() {
     if (!moduleId) return;
     setLoading(true);
-    const { data } = await supabase
+    
+    // Charger les contenus
+    const { data: contenusData } = await supabase
       .from("contenus_module")
       .select("*")
       .eq("module_id", moduleId)
       .order("ordre");
+    
     setItems(
-      (data ?? []).map((c: any) => ({
+      (contenusData ?? []).map((c: any) => ({
         ...c,
         quiz_questions: Array.isArray(c.quiz_questions) ? c.quiz_questions : [],
       })) as Contenu[],
     );
+
+    // Charger la configuration du module
+    const { data: moduleData } = await supabase
+      .from("modules_cours")
+      .select("duree_quiz, seuil_reussite, penalite_deuxieme_essai, ponderation_quiz, ponderation_carnet")
+      .eq("id", moduleId)
+      .single();
+
+    if (moduleData) {
+      setDureeQuiz(moduleData.duree_quiz || 10);
+      setSeuilReussite(moduleData.seuil_reussite || 70);
+      setPenaliteDeuxiemeEssai(moduleData.penalite_deuxieme_essai ? 
+        Math.round((moduleData.penalite_deuxieme_essai || 0) * 100) : 25
+      );
+      setPonderationQuiz(moduleData.ponderation_quiz ? 
+        Math.round((moduleData.ponderation_quiz || 0.6) * 100) : 60
+      );
+      setPonderationCarnet(moduleData.ponderation_carnet ? 
+        Math.round((moduleData.ponderation_carnet || 0.4) * 100) : 40
+      );
+    }
+
     setLoading(false);
   }
 
@@ -111,7 +148,7 @@ export function ModuleContenusEditor({
     let payload: any;
     if (type === "texte") payload = { ...base, contenu_texte: "" };
     else if (type === "video_embed") payload = { ...base, video_platform: "youtube", video_url: "", duree_video_secondes: 0 };
-    else payload = { ...base, quiz_questions: [], quiz_score_min: 70 };
+    else payload = { ...base, quiz_questions: [], quiz_score_min: seuilReussite, quiz_duree_minutes: dureeQuiz, quiz_penalite_deuxieme_essai: penaliteDeuxiemeEssai / 100 };
     const { error } = await supabase.from("contenus_module").insert(payload);
     if (error) return toast.error(error.message);
     await load();
@@ -120,6 +157,47 @@ export function ModuleContenusEditor({
 
   function patch(id: string, changes: Partial<Contenu>) {
     setItems((arr) => arr.map((c) => (c.id === id ? { ...c, ...changes } : c)));
+  }
+
+  // ─── Sauvegarde de la configuration globale du module ───
+  async function saveModuleConfig() {
+    if (!moduleId) return;
+    
+    const payload = {
+      duree_quiz: dureeQuiz,
+      seuil_reussite: seuilReussite,
+      penalite_deuxieme_essai: penaliteDeuxiemeEssai / 100,
+      ponderation_quiz: ponderationQuiz / 100,
+      ponderation_carnet: ponderationCarnet / 100,
+    };
+
+    const { error } = await supabase
+      .from("modules_cours")
+      .update(payload)
+      .eq("id", moduleId);
+
+    if (error) {
+      toast.error("Erreur lors de l'enregistrement de la configuration");
+      return;
+    }
+
+    toast.success("Configuration du module enregistrée");
+    
+    // Mettre à jour les blocs quiz existants avec les nouvelles valeurs par défaut
+    const quizItems = items.filter(c => c.type === "quiz");
+    for (const item of quizItems) {
+      await supabase
+        .from("contenus_module")
+        .update({
+          quiz_score_min: seuilReussite,
+          quiz_duree_minutes: dureeQuiz,
+          quiz_penalite_deuxieme_essai: penaliteDeuxiemeEssai / 100,
+        })
+        .eq("id", item.id);
+    }
+
+    await load();
+    onChanged?.();
   }
 
   // ─── Helpers quiz ───
@@ -197,12 +275,15 @@ export function ModuleContenusEditor({
         return toast.error("Chaque question doit avoir un intitulé et au moins 2 réponses.");
       }
       payload.quiz_questions = qs;
-      payload.quiz_score_min = Math.min(100, Math.max(0, c.quiz_score_min ?? 70));
+      payload.quiz_score_min = Math.min(100, Math.max(0, c.quiz_score_min ?? seuilReussite));
+      payload.quiz_duree_minutes = c.quiz_duree_minutes ?? dureeQuiz;
+      payload.quiz_penalite_deuxieme_essai = c.quiz_penalite_deuxieme_essai ?? (penaliteDeuxiemeEssai / 100);
     }
     const { error } = await supabase.from("contenus_module").update(payload).eq("id", c.id);
     setSavingId(null);
     if (error) return toast.error(error.message);
     toast.success("Bloc enregistré");
+    await load();
   }
 
   async function removeBlock(id: string) {
@@ -224,7 +305,7 @@ export function ModuleContenusEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88vh] overflow-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[88vh] overflow-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Contenus — {moduleTitre}</DialogTitle>
         </DialogHeader>
@@ -233,6 +314,114 @@ export function ModuleContenusEditor({
           <Loader2 className="mx-auto my-8 animate-spin text-primary" />
         ) : (
           <div className="space-y-4">
+            {/* ===== CONFIGURATION GLOBALE DU MODULE ===== */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold text-sm">⚙️ Configuration du module</h3>
+                <span className="text-xs text-muted-foreground ml-2">Ces paramètres s'appliquent à tous les quiz du module</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Temps du quiz */}
+                <div className="space-y-2">
+                  <Label className="text-xs flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Temps imparti (minutes)
+                  </Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={dureeQuiz}
+                    onChange={(e) => setDureeQuiz(Number(e.target.value))}
+                    className="h-8"
+                  />
+                </div>
+
+                {/* Seuil de réussite */}
+                <div className="space-y-2">
+                  <Label className="text-xs flex items-center gap-1">
+                    <Target className="h-3 w-3" />
+                    Seuil de réussite : {seuilReussite}%
+                  </Label>
+                  <Slider
+                    value={[seuilReussite]}
+                    onValueChange={([value]) => setSeuilReussite(value)}
+                    min={40}
+                    max={100}
+                    step={5}
+                    className="py-1"
+                  />
+                </div>
+
+                {/* Pénalité 2e essai */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Pénalité 2e essai : {penaliteDeuxiemeEssai}%</Label>
+                  <Slider
+                    value={[penaliteDeuxiemeEssai]}
+                    onValueChange={([value]) => setPenaliteDeuxiemeEssai(value)}
+                    min={0}
+                    max={50}
+                    step={5}
+                    className="py-1"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Réduction appliquée à la note du 2e essai
+                  </p>
+                </div>
+
+                {/* Pondérations */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Pondération</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <p className="text-xs">Quiz: {ponderationQuiz}%</p>
+                      <Slider
+                        value={[ponderationQuiz]}
+                        onValueChange={([value]) => {
+                          setPonderationQuiz(value);
+                          setPonderationCarnet(100 - value);
+                        }}
+                        min={20}
+                        max={80}
+                        step={5}
+                        className="py-1"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs">Carnet: {ponderationCarnet}%</p>
+                      <Slider
+                        value={[ponderationCarnet]}
+                        onValueChange={([value]) => {
+                          setPonderationCarnet(value);
+                          setPonderationQuiz(100 - value);
+                        }}
+                        min={20}
+                        max={80}
+                        step={5}
+                        className="py-1"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Note finale = (Quiz × {ponderationQuiz}%) + (Carnet × {ponderationCarnet}%)
+                  </p>
+                </div>
+              </div>
+
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="mt-3"
+                onClick={saveModuleConfig}
+              >
+                <Save className="h-3 w-3 mr-1" />
+                Appliquer la configuration
+              </Button>
+            </div>
+
+            {/* ===== LISTE DES BLOCS ===== */}
             {items.length === 0 && (
               <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
                 Aucun contenu. Ajoute un bloc ci-dessous.
@@ -256,13 +445,22 @@ export function ModuleContenusEditor({
                 <div className="space-y-2">
                   <div>
                     <Label className="text-xs">Titre du bloc</Label>
-                    <Input value={c.titre ?? ""} onChange={(e) => patch(c.id, { titre: e.target.value })} placeholder={c.type === "quiz" ? "Ex : Quiz de validation" : "Titre"} />
+                    <Input 
+                      value={c.titre ?? ""} 
+                      onChange={(e) => patch(c.id, { titre: e.target.value })} 
+                      placeholder={c.type === "quiz" ? "Ex : Quiz de validation" : "Titre"} 
+                    />
                   </div>
 
                   {c.type === "texte" && (
                     <div>
                       <Label className="text-xs">Contenu (HTML accepté)</Label>
-                      <Textarea rows={5} value={c.contenu_texte ?? ""} onChange={(e) => patch(c.id, { contenu_texte: e.target.value })} placeholder="<h2>Titre</h2><p>…</p>" />
+                      <Textarea 
+                        rows={5} 
+                        value={c.contenu_texte ?? ""} 
+                        onChange={(e) => patch(c.id, { contenu_texte: e.target.value })} 
+                        placeholder="<h2>Titre</h2><p>…</p>" 
+                      />
                     </div>
                   )}
 
@@ -270,7 +468,10 @@ export function ModuleContenusEditor({
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_120px]">
                       <div>
                         <Label className="text-xs">Plateforme</Label>
-                        <Select value={c.video_platform ?? "youtube"} onValueChange={(v) => patch(c.id, { video_platform: v as Contenu["video_platform"] })}>
+                        <Select 
+                          value={c.video_platform ?? "youtube"} 
+                          onValueChange={(v) => patch(c.id, { video_platform: v as Contenu["video_platform"] })}
+                        >
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="youtube">YouTube</SelectItem>
@@ -279,46 +480,87 @@ export function ModuleContenusEditor({
                           </SelectContent>
                         </Select>
                       </div>
-                      <div><Label className="text-xs">URL</Label><Input value={c.video_url ?? ""} onChange={(e) => patch(c.id, { video_url: e.target.value })} placeholder="https://…" /></div>
-                      <div><Label className="text-xs">Durée (s)</Label><Input type="number" value={c.duree_video_secondes ?? 0} onChange={(e) => patch(c.id, { duree_video_secondes: parseInt(e.target.value) || 0 })} /></div>
+                      <div>
+                        <Label className="text-xs">URL</Label>
+                        <Input 
+                          value={c.video_url ?? ""} 
+                          onChange={(e) => patch(c.id, { video_url: e.target.value })} 
+                          placeholder="https://…" 
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Durée (s)</Label>
+                        <Input 
+                          type="number" 
+                          value={c.duree_video_secondes ?? 0} 
+                          onChange={(e) => patch(c.id, { duree_video_secondes: parseInt(e.target.value) || 0 })} 
+                        />
+                      </div>
                     </div>
                   )}
 
                   {c.type === "quiz" && (
                     <div className="space-y-3">
-                      <div className="flex flex-wrap items-end gap-3">
-                        <div className="w-40">
-                          <Label className="text-xs">Seuil de réussite (%)</Label>
-                          <Input type="number" min={0} max={100} value={c.quiz_score_min ?? 70} onChange={(e) => patch(c.id, { quiz_score_min: parseInt(e.target.value) || 0 })} />
+                      {/* Configuration spécifique au quiz */}
+                      <div className="grid grid-cols-2 gap-2 bg-muted/30 p-3 rounded-lg">
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground">Seuil réussite</Label>
+                          <Input 
+                            type="number" 
+                            min={0} 
+                            max={100} 
+                            className="h-7 text-sm"
+                            value={c.quiz_score_min ?? seuilReussite} 
+                            onChange={(e) => patch(c.id, { quiz_score_min: parseInt(e.target.value) || 0 })} 
+                          />
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={downloadTemplate}>
-                            <Download size={13} className="mr-1" />Template CSV
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => fileInputs.current[c.id]?.click()}>
-                            <Upload size={13} className="mr-1" />Importer un CSV
-                          </Button>
-                          <input
-                            ref={(el) => { fileInputs.current[c.id] = el; }}
-                            type="file"
-                            accept=".csv,text/csv"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) importCSV(c, f);
-                              e.target.value = "";
-                            }}
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground">Durée (min)</Label>
+                          <Input 
+                            type="number" 
+                            min={1} 
+                            max={120} 
+                            className="h-7 text-sm"
+                            value={c.quiz_duree_minutes ?? dureeQuiz} 
+                            onChange={(e) => patch(c.id, { quiz_duree_minutes: parseInt(e.target.value) || 1 })} 
                           />
                         </div>
                       </div>
 
+                      {/* Import / Export */}
+                      <div className="flex flex-wrap items-end gap-2">
+                        <Button size="sm" variant="outline" onClick={downloadTemplate}>
+                          <Download size={13} className="mr-1" />Template CSV
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => fileInputs.current[c.id]?.click()}>
+                          <Upload size={13} className="mr-1" />Importer un CSV
+                        </Button>
+                        <input
+                          ref={(el) => { fileInputs.current[c.id] = el; }}
+                          type="file"
+                          accept=".csv,text/csv"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) importCSV(c, f);
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
+
+                      {/* Liste des questions */}
                       {(c.quiz_questions ?? []).map((q, qi) => (
                         <div key={qi} className="rounded-lg border border-border bg-background p-3">
                           <div className="mb-2 flex items-center gap-2">
                             <span className="text-xs font-semibold text-muted-foreground">Question {qi + 1}</span>
                             <Button size="icon" variant="ghost" className="ml-auto text-destructive" onClick={() => removeQuestion(c, qi)}><Trash2 size={12} /></Button>
                           </div>
-                          <Input className="mb-2" value={q.question} onChange={(e) => updQuestion(c, qi, { question: e.target.value })} placeholder="Intitulé de la question" />
+                          <Input 
+                            className="mb-2" 
+                            value={q.question} 
+                            onChange={(e) => updQuestion(c, qi, { question: e.target.value })} 
+                            placeholder="Intitulé de la question" 
+                          />
                           <div className="space-y-1.5">
                             {q.options.map((opt, oi) => (
                               <div key={oi} className="flex items-center gap-2">
@@ -330,17 +572,35 @@ export function ModuleContenusEditor({
                                 >
                                   <Check size={12} />
                                 </button>
-                                <Input value={opt} onChange={(e) => updOption(c, qi, oi, e.target.value)} placeholder={`Réponse ${oi + 1}`} />
-                                <Button size="icon" variant="ghost" className="text-muted-foreground" onClick={() => removeOption(c, qi, oi)} disabled={q.options.length <= 2}><Trash2 size={12} /></Button>
+                                <Input 
+                                  value={opt} 
+                                  onChange={(e) => updOption(c, qi, oi, e.target.value)} 
+                                  placeholder={`Réponse ${oi + 1}`} 
+                                />
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  className="text-muted-foreground" 
+                                  onClick={() => removeOption(c, qi, oi)} 
+                                  disabled={q.options.length <= 2}
+                                >
+                                  <Trash2 size={12} />
+                                </Button>
                               </div>
                             ))}
                           </div>
-                          <Button size="sm" variant="ghost" className="mt-1 text-xs" onClick={() => addOption(c, qi)}><Plus size={12} className="mr-1" />Ajouter une réponse</Button>
+                          <Button size="sm" variant="ghost" className="mt-1 text-xs" onClick={() => addOption(c, qi)}>
+                            <Plus size={12} className="mr-1" />Ajouter une réponse
+                          </Button>
                         </div>
                       ))}
 
-                      <Button size="sm" variant="outline" onClick={() => addQuestion(c)}><Plus size={13} className="mr-1" />Ajouter une question</Button>
-                      <p className="text-xs text-muted-foreground">Cercle vert = bonne réponse. Min. 2 réponses. L'import CSV ajoute aux questions existantes.</p>
+                      <Button size="sm" variant="outline" onClick={() => addQuestion(c)}>
+                        <Plus size={13} className="mr-1" />Ajouter une question
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Cercle vert = bonne réponse. Min. 2 réponses. L'import CSV ajoute aux questions existantes.
+                      </p>
                     </div>
                   )}
 
@@ -354,10 +614,17 @@ export function ModuleContenusEditor({
               </div>
             ))}
 
+            {/* ===== BOUTONS D'AJOUT ===== */}
             <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-              <Button variant="outline" size="sm" onClick={() => addBlock("texte")}><Plus size={14} className="mr-1" /><FileText size={14} className="mr-1" />Texte</Button>
-              <Button variant="outline" size="sm" onClick={() => addBlock("video_embed")}><Plus size={14} className="mr-1" /><Video size={14} className="mr-1" />Vidéo</Button>
-              <Button variant="outline" size="sm" onClick={() => addBlock("quiz")}><Plus size={14} className="mr-1" /><HelpCircle size={14} className="mr-1" />Quiz</Button>
+              <Button variant="outline" size="sm" onClick={() => addBlock("texte")}>
+                <Plus size={14} className="mr-1" /><FileText size={14} className="mr-1" />Texte
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => addBlock("video_embed")}>
+                <Plus size={14} className="mr-1" /><Video size={14} className="mr-1" />Vidéo
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => addBlock("quiz")}>
+                <Plus size={14} className="mr-1" /><HelpCircle size={14} className="mr-1" />Quiz
+              </Button>
             </div>
           </div>
         )}
