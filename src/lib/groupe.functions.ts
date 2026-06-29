@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "~/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "~/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // === CRÉER UN GROUPE ===
 export const createGroupe = createServerFn({ method: "POST" })
@@ -161,7 +161,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
           *,
           parcours (
             id,
-            titre,
+            nom,
             mission_id
           ),
           groupe_membres (
@@ -192,7 +192,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
         *,
         parcours (
           id,
-          titre,
+            nom,
           mission_id
         ),
         groupe_membres (
@@ -233,7 +233,7 @@ export const getStudentGroupe = createServerFn({ method: "GET" })
         *,
         parcours (
           id,
-          titre,
+          nom,
           mission_id
         ),
         groupe_membres (

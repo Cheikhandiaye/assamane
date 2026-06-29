@@ -1,7 +1,7 @@
-import { Card, CardContent } from "~/components/ui/card";
-import { Progress } from "~/components/ui/progress";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   CheckCircle, 
   Lock, 
@@ -13,9 +13,11 @@ import {
   AlertCircle,
   Clock,
   ChevronRight,
-  RefreshCw
+  RefreshCw,
+  Users,
 } from "lucide-react";
-import { cn } from "~/lib/utils";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export interface EtapeModule {
   id: string;

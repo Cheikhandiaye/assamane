@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "~/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "~/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // === AJOUTER DE L'XP ===
 export const addXP = createServerFn({ method: "POST" })
@@ -62,6 +62,20 @@ export const addXP = createServerFn({ method: "POST" })
   });
 
 // === ENREGISTRER UNE CONNEXION (Streak) ===
+
+export const getStudentXP = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }: { context: any }) => {
+    const { data, error } = await supabaseAdmin
+      .from("xp_etudiants")
+      .select("*")
+      .eq("etudiant_id", context.userId)
+      .order("total_xp", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  });
+
 export const recordConnexion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }: { context: any }) => {

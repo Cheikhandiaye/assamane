@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Progress } from "~/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { 
   Trophy, 
   Users, 
@@ -102,7 +102,7 @@ export function PartenaireLeaderboard({ partenaireId, parcoursId }: PartenaireLe
             .eq("etudiant_id", p.id);
 
           const noteMoyenne = notes && notes.length > 0
-            ? Math.round(notes.reduce((acc, n) => acc + n.note_finale, 0) / notes.length)
+            ? Math.round(notes.reduce((acc, n) => acc + (n.note_finale ?? 0), 0) / notes.length)
             : 0;
 
           // Parcours terminés
@@ -119,7 +119,7 @@ export function PartenaireLeaderboard({ partenaireId, parcoursId }: PartenaireLe
             .in("parcours_id", parcoursIds);
 
           const parcoursTermines = notesParParcours?.reduce((acc, n) => {
-            if (n.note_finale >= 70) {
+            if ((n.note_finale ?? 0) >= 70) {
               acc.add(n.parcours_id);
             }
             return acc;
@@ -127,7 +127,7 @@ export function PartenaireLeaderboard({ partenaireId, parcoursId }: PartenaireLe
 
           // Progression globale
           const totalModules = notes?.length || 0;
-          const modulesReussis = notes?.filter((n) => n.note_finale >= 70).length || 0;
+          const modulesReussis = notes?.filter((n) => (n.note_finale ?? 0) >= 70).length || 0;
           const progressionGlobale = totalModules > 0 
             ? Math.round((modulesReussis / totalModules) * 100)
             : 0;

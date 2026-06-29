@@ -44,7 +44,7 @@ interface GroupeData {
   created_at: string;
   parcours: {
     id: string;
-    titre: string;
+    nom: string;
   };
   groupe_membres: GroupeMembre[];
   suivi_groupe_module: Array<{
@@ -57,7 +57,7 @@ interface GroupeData {
 
 interface ParcoursOption {
   id: string;
-  titre: string;
+  nom: string;
 }
 
 function ProfDashboard() {
@@ -104,13 +104,13 @@ function ProfDashboard() {
     try {
       const { data } = await supabase
         .from("parcours_professeurs")
-        .select("parcours_id, parcours(id, titre)")
+        .select("parcours_id, parcours(id, nom)")
         .eq("professeur_id", user.id);
       
       if (data) {
         const options = data
           .map((p) => p.parcours)
-          .filter((p): p is { id: string; titre: string } => p !== null);
+          .filter((p): p is { id: string; nom: string } => p !== null);
         setParcoursOptions(options);
       }
     } catch (error) {
@@ -339,7 +339,7 @@ function ProfDashboard() {
                     <SelectContent>
                       {parcoursOptions.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.titre}
+                          {p.nom}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -359,10 +359,10 @@ function ProfDashboard() {
                               checked={selectedEtudiants.includes(e.id)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setSelectedEtudiants([...selectedEtudiants, e.id]);
+                                  setSelectedEtudiants([...selectedEtudiants, e.currentTarget.value]);
                                 } else {
-                                  setSelectedEtudiants(selectedEtudiants.filter((id) => id !== e.id));
-                                  if (newGroupeRapporteurId === e.id) {
+                                  setSelectedEtudiants(selectedEtudiants.filter((id) => id !== e.currentTarget.value));
+                                  if (newGroupeRapporteurId === e.currentTarget.value) {
                                     setNewGroupeRapporteurId("");
                                   }
                                 }
@@ -440,7 +440,7 @@ function ProfDashboard() {
                           </Badge>
                         </CardTitle>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {g.parcours?.titre || "Parcours inconnu"}
+                          {g.parcours?.nom || "Parcours inconnu"}
                         </p>
                       </div>
                       <Badge variant={progression >= 80 ? "default" : "secondary"}>

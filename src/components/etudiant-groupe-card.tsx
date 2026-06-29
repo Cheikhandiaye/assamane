@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { Badge } from "~/components/ui/badge";
-import { Progress } from "~/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Users, Star, User, Clock, CheckCircle, AlertCircle } from "lucide-react";
 
 interface GroupeMembre {
@@ -20,7 +20,7 @@ interface GroupeData {
   parcours_id: string;
   parcours: {
     id: string;
-    titre: string;
+    nom: string;
   };
   groupe_membres: GroupeMembre[];
   suivi_groupe_module: Array<{
@@ -90,7 +90,7 @@ export function EtudiantGroupeCard({ groupe, userId, moduleActuel }: EtudiantGro
               {groupe.nom}
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              {groupe.parcours?.titre || "Parcours"}
+              {groupe.parcours?.nom || "Parcours"}
             </p>
           </div>
           <Badge variant="outline" className="text-sm">

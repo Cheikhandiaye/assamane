@@ -39,7 +39,7 @@ interface GroupeData {
   parcours_id: string;
   parcours: {
     id: string;
-    titre: string;
+    nom: string;
   };
   groupe_membres: Array<{
     etudiant_id: string;
@@ -132,7 +132,7 @@ function EtudiantDashboard() {
             parcours_id,
             parcours (
               id,
-              titre,
+              nom,
               mission_id,
               modules_cours (
                 id,
@@ -152,7 +152,7 @@ function EtudiantDashboard() {
             const modulesValides = modules.filter((m) => {
               // Vérifier si le module est validé via les notes
               return notesData?.some((n) => 
-                n.module_id === m.id && n.note_finale >= 70
+                n.module_id === m.id && (n.note_finale ?? 0) >= 70
               );
             });
             return modulesValides.length < modules.length;
@@ -161,7 +161,7 @@ function EtudiantDashboard() {
           if (parcoursEnCours && parcoursEnCours.parcours) {
             const modules = parcoursEnCours.parcours.modules_cours || [];
             const modulesValides = notesData?.filter(
-              (n) => n.note_finale >= 70
+              (n) => (n.note_finale ?? 0) >= 70
             ).map((n) => n.module_id) || [];
             
             // Trouver le prochain module non validé
@@ -242,7 +242,7 @@ function EtudiantDashboard() {
 
   // Calcul de la note moyenne
   const moyenneGenerale = notes.length > 0
-    ? Math.round(notes.reduce((acc, n) => acc + n.note_finale, 0) / notes.length)
+    ? Math.round(notes.reduce((acc, n) => acc + (n.note_finale ?? 0), 0) / notes.length)
     : 0;
 
   return (
@@ -334,7 +334,7 @@ function EtudiantDashboard() {
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between">
                               <div>
-                                <p className="font-medium">{p.parcours?.titre || "Parcours"}</p>
+                                <p className="font-medium">{p.parcours?.nom || "Parcours"}</p>
                                 <p className="text-xs text-muted-foreground">
                                   {modulesValides.length}/{modules.length} modules
                                 </p>
