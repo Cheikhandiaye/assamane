@@ -9,7 +9,7 @@ export interface CurrentUser {
   role: AppRole | null;
   fullName: string | null;
   loading: boolean;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
 export function useCurrentUser(): CurrentUser {
