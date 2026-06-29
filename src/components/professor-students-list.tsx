@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronRight, Award, Star } from "lucide-react";
+import { Search, ChevronRight, Award, Star, Users } from "lucide-react";
 
 interface Student {
   etudiant_id: string;
