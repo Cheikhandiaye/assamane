@@ -8,8 +8,10 @@ import { RouteErrorBoundary } from "@/components/route-error-boundary";
 import { PartnerLogo } from "@/components/partner-logo";
 import {
   Loader2, ArrowLeft, Target, Users,
-  Building2, Mail, BookOpen,
+  Building2, Mail, BookOpen, Pencil, Trash2,
 } from "lucide-react";
+import { PartenaireFormDialog } from "@/components/partenaire-form";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/partenaires/$partenaireId")({
   component: Page,
@@ -37,20 +39,39 @@ function Page() {
   const [partenaire, setPartenaire] = useState<any>(null);
   const [missions, setMissions] = useState<any[]>([]);
   const [stats, setStats] = useState({ missions: 0, parcours: 0, etudiants: 0 });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [{ data: p }, { data: m }] = await Promise.all([
-        supabase.from("partenaires").select("*").eq("id", partenaireId).maybeSingle(),
-        supabase
-          .from("missions")
-          .select("id, nom, statut, date_debut, date_fin, description")
-          .eq("partenaire_id", partenaireId)
-          .order("created_at", { ascending: false }),
-      ]);
+      // 🔥 UTILISER LA FONCTION RPC pour récupérer le partenaire
+      const { data: pData, error: pError } = await supabase
+        .rpc("get_partenaire_by_id", { p_id: partenaireId });
 
+      if (pError) {
+        console.error("Erreur chargement partenaire:", pError);
+        toast.error("Erreur de chargement du partenaire");
+        setLoading(false);
+        return;
+      }
+
+      const p = pData?.[0] || null;
       setPartenaire(p);
-      const missionsData = m ?? [];
+
+      // Récupérer les missions (RLS gère automatiquement)
+      const { data: mData, error: mError } = await supabase
+        .from("missions")
+        .select("id, nom, statut, date_debut, date_fin, description")
+        .eq("partenaire_id", partenaireId)
+        .order("created_at", { ascending: false });
+
+      if (mError) {
+        console.error("Erreur chargement missions:", mError);
+        toast.error("Erreur de chargement des missions");
+        setLoading(false);
+        return;
+      }
+
+      const missionsData = mData ?? [];
 
       // Enrichit chaque mission avec nb parcours + nb étudiants
       const enriched = await Promise.all(
@@ -83,6 +104,25 @@ function Page() {
     })();
   }, [partenaireId]);
 
+  // 🔥 Fonction de suppression via RPC
+  const handleDelete = async () => {
+    if (!confirm(`Supprimer définitivement le partenaire "${partenaire?.nom}" ?`)) return;
+
+    try {
+      const { data, error } = await supabase.rpc("delete_partenaire", {
+        p_id: partenaireId,
+      });
+
+      if (error) throw error;
+      toast.success("Partenaire supprimé");
+      // Rediriger vers la liste
+      window.location.href = "/admin/partenaires";
+    } catch (error: any) {
+      console.error("Erreur suppression:", error);
+      toast.error(error.message || "Erreur lors de la suppression");
+    }
+  };
+
   if (loading) {
     return (
       <AssirikShell title="Partenaire">
@@ -111,11 +151,21 @@ function Page() {
   return (
     <AssirikShell title={`🏢 ${partenaire.nom}`}>
       {/* Retour */}
-      <Link to="/admin/partenaires">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft size={14} className="mr-1" /> Tous les partenaires
-        </Button>
-      </Link>
+      <div className="flex items-center justify-between mb-4">
+        <Link to="/admin/partenaires">
+          <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft size={14} className="mr-1" /> Tous les partenaires
+          </Button>
+        </Link>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+            <Pencil size={14} className="mr-1" /> Modifier
+          </Button>
+          <Button variant="destructive" size="sm" onClick={handleDelete}>
+            <Trash2 size={14} className="mr-1" /> Supprimer
+          </Button>
+        </div>
+      </div>
 
       {/* Header partenaire */}
       <div className="mb-6 rounded-2xl border border-border bg-card p-5">
@@ -204,6 +254,17 @@ function Page() {
           ))}
         </div>
       )}
+
+      {/* Dialog d'édition */}
+      <PartenaireFormDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        initial={partenaire}
+        onSaved={() => {
+          // Recharger les données
+          window.location.reload();
+        }}
+      />
     </AssirikShell>
   );
 }
