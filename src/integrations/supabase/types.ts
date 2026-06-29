@@ -1680,11 +1680,15 @@ export type Database = {
           email: string
           etudiant_id: string
           full_name: string
+          mission_id: string
+          mission_nom: string
           modules_total: number
           modules_valides: number
           note_moyenne: number
           parcours_id: string
           parcours_titre: string
+          partenaire_id: string
+          partenaire_nom: string
           progression: number
           statut: string
         }[]
