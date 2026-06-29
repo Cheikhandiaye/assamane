@@ -56,13 +56,13 @@ interface ParcoursOption {
 
 export function ProfesseurGroupesList() {
   const { user } = useCurrentUser();
-  
+
   // États pour les groupes
   const [groupes, setGroupes] = useState<GroupeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [parcoursOptions, setParcoursOptions] = useState<ParcoursOption[]>([]);
   const [etudiantsOptions, setEtudiantsOptions] = useState<{ id: string; full_name: string }[]>([]);
-  
+
   // États pour le formulaire de création de groupe
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newGroupeNom, setNewGroupeNom] = useState("");
@@ -70,7 +70,7 @@ export function ProfesseurGroupesList() {
   const [newGroupeRapporteurId, setNewGroupeRapporteurId] = useState("");
   const [selectedEtudiants, setSelectedEtudiants] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // États pour la gestion des membres
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [manageGroupeId, setManageGroupeId] = useState<string | null>(null);
@@ -99,7 +99,7 @@ export function ProfesseurGroupesList() {
         .from("parcours_professeurs")
         .select("parcours_id, parcours(id, nom)")
         .eq("professeur_id", user.id);
-      
+
       if (data) {
         const options = data
           .map((p) => p.parcours)
@@ -119,7 +119,7 @@ export function ProfesseurGroupesList() {
         .from("parcours_etudiants")
         .select("etudiant_id, profiles(id, full_name)")
         .eq("parcours_id", parcoursId);
-      
+
       if (data) {
         const etudiants = data
           .map((p) => p.profiles)
@@ -151,7 +151,7 @@ export function ProfesseurGroupesList() {
       if (data) {
         const disponibles = data
           .map((p) => p.profiles)
-          .filter((p): p is { id: string; full_name: string } => 
+          .filter((p): p is { id: string; full_name: string } =>
             p !== null && !membresIds.includes(p.id)
           );
         setAvailableEtudiants(disponibles);
@@ -161,11 +161,13 @@ export function ProfesseurGroupesList() {
     }
   };
 
-  // Charger les données initiales
+  // Charger les données initiales — UNIQUEMENT quand la session (user) est prête,
+  // sinon l'appel serveur part sans token d'auth ("No authorization header").
   useEffect(() => {
+    if (!user) return;
     fetchGroupes();
     fetchParcoursOptions();
-  }, []);
+  }, [user]);
 
   // Charger les étudiants quand le parcours change
   useEffect(() => {
@@ -206,7 +208,7 @@ export function ProfesseurGroupesList() {
           rapporteur_id: newGroupeRapporteurId,
         },
       });
-      
+
       toast.success("Groupe créé avec succès !");
       setCreateDialogOpen(false);
       setNewGroupeNom("");
@@ -465,7 +467,7 @@ export function ProfesseurGroupesList() {
           {groupes.map((g) => {
             const progression = getProgressionGroupe(g);
             const isRapporteur = g.rapporteur_id === user?.id;
-            
+
             return (
               <Card key={g.id} className="border-primary/5 hover:border-primary/20 transition-colors">
                 <CardHeader className="pb-3">
@@ -484,7 +486,7 @@ export function ProfesseurGroupesList() {
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <Badge 
+                      <Badge
                         variant={progression >= 80 ? "default" : progression >= 50 ? "secondary" : "outline"}
                         className="text-xs"
                       >
@@ -539,7 +541,7 @@ export function ProfesseurGroupesList() {
                       <UserPlus className="h-3 w-3 mr-1" />
                       Gérer
                     </Button>
-                    
+
                     {g.groupe_membres && g.groupe_membres.length > 1 && (
                       <Button
                         variant="outline"
@@ -566,7 +568,6 @@ export function ProfesseurGroupesList() {
                       size="sm"
                       className="text-xs h-7 ml-auto"
                       onClick={() => {
-                        // Navigation vers la vue du groupe (à implémenter plus tard)
                         toast.info("Vue détaillée du groupe en cours de développement");
                       }}
                     >
