@@ -73,7 +73,8 @@ function EtudiantDashboard() {
           const xpResult = await getStudentXP({});
           console.log("XP:", xpResult);
           if (xpResult && xpResult.length > 0) {
-            setXpData(xpResult[0]);
+            const row = xpResult[0];
+            setXpData({ total_xp: row.total_xp ?? 0, niveau: row.niveau ?? 1 });
           }
         } catch (e) {
           console.warn("Erreur XP (non bloquante):", e);

@@ -11,12 +11,12 @@ export interface AttestationStatus {
 
 export async function fetchAttestationStatus(etudiantId: string, parcoursId: string): Promise<AttestationStatus> {
   const { data, error } = await supabase.rpc("fn_parcours_attestation", {
-    _etudiant_id: etudiantId,
-    _parcours_id: parcoursId,
+    p_etudiant_id: etudiantId,
+    p_parcours_id: parcoursId,
   });
   if (error) return { complete: false, completed_at: null, deadline: null, within_deadline: false };
   const row = Array.isArray(data) ? data[0] : data;
-  return (row as AttestationStatus) ?? { complete: false, completed_at: null, deadline: null, within_deadline: false };
+  return (row as unknown as AttestationStatus) ?? { complete: false, completed_at: null, deadline: null, within_deadline: false };
 }
 
 export interface AttestationData {

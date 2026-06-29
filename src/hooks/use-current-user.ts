@@ -1,59 +1,55 @@
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
 
-interface CurrentUser {
+export type AppRole = "admin" | "professeur" | "etudiant" | "partenaire";
+
+export interface CurrentUser {
   user: User | null;
-  role: string | null;
+  role: AppRole | null;
   fullName: string | null;
-  isLoading: boolean;
+  loading: boolean;
+  isLoading?: boolean;
 }
 
 export function useCurrentUser(): CurrentUser {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<string | null>(null);
-  const [fullName, setFullName] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useState<CurrentUser>({
+    user: null,
+    role: null,
+    fullName: null,
+    loading: true,
+  });
 
   useEffect(() => {
-    const fetchUser = async () => {
-      setIsLoading(true);
-      try {
-        // Récupérer la session
-        const { data: sessionData } = await supabase.auth.getSession();
-        const currentUser = sessionData?.session?.user || null;
-        setUser(currentUser);
+    let cancelled = false;
 
-        if (currentUser) {
-          // Récupérer le rôle via RPC au lieu de REST
-          const { data: roleData, error: roleError } = await supabase
-            .rpc("get_user_role", { p_user_id: currentUser.id });
-
-          if (roleError) {
-            console.warn("Erreur récupération rôle:", roleError);
-          } else {
-            setRole(roleData);
-          }
-
-          // Récupérer le nom via RPC
-          const { data: profileData, error: profileError } = await supabase
-            .rpc("get_user_profile", { p_user_id: currentUser.id });
-
-          if (profileError) {
-            console.warn("Erreur récupération profil:", profileError);
-          } else {
-            setFullName(profileData?.full_name || null);
-          }
-        }
-      } catch (error) {
-        console.error("Erreur useCurrentUser:", error);
-      } finally {
-        setIsLoading(false);
+    async function load(user: User | null) {
+      if (!user) {
+        if (!cancelled) setState({ user: null, role: null, fullName: null, loading: false });
+        return;
       }
-    };
+      const [{ data: roleRow }, { data: profile }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      setState({
+        user,
+        role: (roleRow?.role as AppRole | undefined) ?? null,
+        fullName: profile?.full_name ?? null,
+        loading: false,
+      });
+    }
 
-    fetchUser();
+    supabase.auth.getUser().then(({ data }) => load(data.user));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      load(session?.user ?? null);
+    });
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
-  return { user, role, fullName, isLoading };
+  return { ...state, isLoading: state.loading };
 }

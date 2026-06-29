@@ -25,6 +25,7 @@ const createSchema = z.object({
 
 export const createUserFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ data, context }) => {
     if (!data.email) throw new Error("Email requis");
     if (!data.password || data.password.length < 8) throw new Error("Mot de passe minimum 8 caractères");
@@ -76,6 +77,7 @@ const updateSchema = z.object({
 
 export const updateUserFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ data, context }) => {
     if (!data.user_id) throw new Error("ID utilisateur requis");
 
@@ -114,6 +116,7 @@ const deleteSchema = z.object({ user_id: z.string().uuid() });
 
 export const deleteUserFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => d as any)
   .handler(async ({ data, context }) => {
     if (!data.user_id) throw new Error("ID utilisateur requis");
 
@@ -212,28 +215,13 @@ export const deleteUserFn = createServerFn({ method: "POST" })
     // =============================================
     // 4. SUPPRIMER LES DEMANDES DE PROLONGATION
     // =============================================
-    // 🔥 CORRECTION : utilisation de "demandee_par"
-    try {
-      const { error: d1 } = await supabaseAdmin
-        .from("demandes_prolongation")
-        .delete()
-        .eq("demandee_par", userId);
-      
-      if (d1) throw new Error(`Erreur suppression prolongations: ${d1.message}`);
-    } catch (err: any) {
-      // Si la colonne n'existe pas, essayer avec "etudiant_id"
-      if (err.message.includes("column") && err.message.includes("does not exist")) {
-        console.warn("La colonne demandee_par n'existe pas, essai avec etudiant_id");
-        const { error: d1bis } = await supabaseAdmin
-          .from("demandes_prolongation")
-          .delete()
-          .eq("etudiant_id", userId);
-        
-        if (d1bis) throw new Error(`Erreur suppression prolongations (etudiant_id): ${d1bis.message}`);
-      } else {
-        throw err;
-      }
-    }
+    // Note: la colonne s'appelle "demandee_par" et non "etudiant_id"
+    const { error: d1 } = await supabaseAdmin
+      .from("demandes_prolongation")
+      .delete()
+      .eq("demandee_par", userId);
+    
+    if (d1) throw new Error(`Erreur suppression prolongations: ${d1.message}`);
 
     // =============================================
     // 5. SUPPRIMER LES AUTRES DONNÉES
@@ -304,27 +292,13 @@ export const deleteUserFn = createServerFn({ method: "POST" })
     if (n3) throw new Error(`Erreur suppression notes finales: ${n3.message}`);
 
     // 5.9 Supprimer les notifications
-    // Note: la colonne s'appelle "destinataire_id"
-    try {
-      const { error: notif } = await supabaseAdmin
-        .from("notifications")
-        .delete()
-        .eq("destinataire_id", userId);
-      
-      if (notif) throw new Error(`Erreur suppression notifications: ${notif.message}`);
-    } catch (err: any) {
-      if (err.message.includes("column") && err.message.includes("does not exist")) {
-        console.warn("La colonne destinataire_id n'existe pas, essai avec etudiant_id");
-        const { error: notifBis } = await supabaseAdmin
-          .from("notifications")
-          .delete()
-          .eq("etudiant_id", userId);
-        
-        if (notifBis) throw new Error(`Erreur suppression notifications (etudiant_id): ${notifBis.message}`);
-      } else {
-        throw err;
-      }
-    }
+    // Note: la colonne s'appelle "destinataire_id" et non "etudiant_id"
+    const { error: notif } = await supabaseAdmin
+      .from("notifications")
+      .delete()
+      .eq("destinataire_id", userId);
+    
+    if (notif) throw new Error(`Erreur suppression notifications: ${notif.message}`);
 
     // 5.10 Supprimer les connexions (streak)
     const { error: c1 } = await supabaseAdmin

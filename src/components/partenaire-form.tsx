@@ -63,9 +63,9 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
 
   async function onPickLogo(file: File | null) {
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Logo > 5 Mo");
-      return;
+    if (file.size > 5 * 1024 * 1024) { 
+      toast.error("Logo > 5 Mo"); 
+      return; 
     }
     setUploading(true);
     try {
@@ -74,8 +74,8 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
       toast.success("Logo téléversé");
     } catch (e: any) {
       toast.error(e?.message ?? "Erreur d'upload");
-    } finally {
-      setUploading(false);
+    } finally { 
+      setUploading(false); 
     }
   }
 
@@ -100,11 +100,11 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
 
     const payload = {
       nom: form.nom.trim(),
-      logo_url: form.logo_url.trim() || null,
-      couleur_primaire: form.couleur_primaire || null,
-      couleur_secondaire: form.couleur_secondaire || null,
-      adresse: form.adresse.trim() || null,
-      contact_email: form.contact_email.trim() || null,
+      logo_url: form.logo_url.trim() || undefined,
+      couleur_primaire: form.couleur_primaire || undefined,
+      couleur_secondaire: form.couleur_secondaire || undefined,
+      adresse: form.adresse.trim() || undefined,
+      contact_email: form.contact_email.trim() || undefined,
     };
 
     try {
@@ -160,36 +160,39 @@ export function PartenaireFormDialog({ open, onOpenChange, initial, onSaved }: P
             <Input id="nom" value={form.nom} onChange={(e) => set("nom", e.target.value)} required />
           </div>
 
-          {/* UPLOAD DU LOGO */}
+          {/* Upload du logo - VERSION AMÉLIORÉE */}
           <div className="space-y-2">
             <Label>Logo</Label>
-            <div className="flex items-center gap-3 flex-wrap">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent transition-colors">
+            <div className="flex items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent">
                 {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                 {uploading ? "Téléversement..." : "Téléverser un fichier"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => onPickLogo(e.target.files?.[0] ?? null)}
-                  disabled={uploading}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={(e) => onPickLogo(e.target.files?.[0] ?? null)} 
+                  disabled={uploading} 
                 />
               </label>
-              <Input
-                value={form.logo_url}
-                onChange={(e) => set("logo_url", e.target.value)}
-                placeholder="https://… ou téléverser"
-                className="flex-1 min-w-[150px]"
+              <Input 
+                id="logo" 
+                value={form.logo_url} 
+                onChange={(e) => set("logo_url", e.target.value)} 
+                placeholder="https://… ou téléverser" 
+                className="flex-1"
               />
             </div>
+            
+            {/* Aperçu du logo avec bouton de suppression */}
             {form.logo_url && (
               <div className="flex items-center gap-3 p-2 rounded-md border bg-muted/30">
                 <PartnerLogo path={form.logo_url} alt="Aperçu" className="h-12 w-12 rounded-md object-cover" />
                 <span className="text-xs text-muted-foreground flex-1 truncate">{form.logo_url}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
                   className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
                   onClick={onRemoveLogo}
                 >
