@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { 
   Loader2, Users, Building2, BookOpen, 
-  CheckCircle, Clock, TrendingUp, AlertCircle 
+  CheckCircle, Clock, TrendingUp, AlertCircle,
+  LayoutDashboard
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -21,24 +22,38 @@ function AdminDashboard() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUser();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    partenaires: number;
+    missions: number;
+    parcours: number;
+    etudiants: number;
+    professeurs: number;
+    validations: number;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Si ce n'est pas la page admin, ne rien faire
     if (pathname !== "/admin") return;
-    if (!user) return;
+    
+    // Si pas d'utilisateur, ne rien faire
+    if (!user) {
+      console.log("AdminDashboard: Pas d'utilisateur");
+      setLoading(false);
+      return;
+    }
+
+    console.log("AdminDashboard: Chargement pour user", user.id);
 
     const loadStats = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
-        // Charger les statistiques simples
-        const [
-          { count: partenaires },
-          { count: missions },
-          { count: parcours },
-          { count: etudiants },
-          { count: professeurs },
-          { count: validations },
-        ] = await Promise.all([
+        console.log("AdminDashboard: Début du chargement des stats");
+        
+        // Récupérer les statistiques une par une pour mieux diagnostiquer
+        const [partenairesResult, missionsResult, parcoursResult, etudiantsResult, professeursResult, validationsResult] = await Promise.all([
           supabase.from("partenaires").select("*", { count: "exact", head: true }),
           supabase.from("missions").select("*", { count: "exact", head: true }),
           supabase.from("parcours").select("*", { count: "exact", head: true }),
@@ -47,37 +62,79 @@ function AdminDashboard() {
           supabase.from("reponses_etudiant").select("*", { count: "exact", head: true }).eq("statut", "soumis"),
         ]);
 
-        setStats({
-          partenaires: partenaires || 0,
-          missions: missions || 0,
-          parcours: parcours || 0,
-          etudiants: etudiants || 0,
-          professeurs: professeurs || 0,
-          validations: validations || 0,
+        console.log("AdminDashboard: Statistiques reçues", {
+          partenaires: partenairesResult.count,
+          missions: missionsResult.count,
+          parcours: parcoursResult.count,
+          etudiants: etudiantsResult.count,
+          professeurs: professeursResult.count,
+          validations: validationsResult.count,
         });
+
+        // Vérifier les erreurs individuelles
+        if (partenairesResult.error) console.warn("Erreur partenaires:", partenairesResult.error);
+        if (missionsResult.error) console.warn("Erreur missions:", missionsResult.error);
+        if (parcoursResult.error) console.warn("Erreur parcours:", parcoursResult.error);
+        if (etudiantsResult.error) console.warn("Erreur etudiants:", etudiantsResult.error);
+        if (professeursResult.error) console.warn("Erreur professeurs:", professeursResult.error);
+        if (validationsResult.error) console.warn("Erreur validations:", validationsResult.error);
+
+        setStats({
+          partenaires: partenairesResult.count || 0,
+          missions: missionsResult.count || 0,
+          parcours: parcoursResult.count || 0,
+          etudiants: etudiantsResult.count || 0,
+          professeurs: professeursResult.count || 0,
+          validations: validationsResult.count || 0,
+        });
+
+        console.log("AdminDashboard: Stats mises à jour");
+
       } catch (error: any) {
-        console.error("Erreur chargement stats:", error);
-        toast.error(error.message || "Erreur de chargement");
+        console.error("AdminDashboard: Erreur fatale", error);
+        setError(error.message || "Erreur de chargement");
+        toast.error("Erreur de chargement du tableau de bord");
       } finally {
         setLoading(false);
+        console.log("AdminDashboard: Chargement terminé");
       }
     };
 
     loadStats();
   }, [pathname, user]);
 
+  // Si la route n'est pas /admin, afficher le Outlet
   if (pathname !== "/admin") return <Outlet />;
 
-  if (loading) {
+  // === AFFICHAGE DE L'ERREUR ===
+  if (error) {
     return (
-      <AssirikShell title="Administration">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <AssirikShell title="🛠️ Administration">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
+          <h2 className="text-xl font-bold mb-2">Erreur de chargement</h2>
+          <p className="text-muted-foreground max-w-md mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Réessayer
+          </Button>
         </div>
       </AssirikShell>
     );
   }
 
+  // === CHARGEMENT ===
+  if (loading) {
+    return (
+      <AssirikShell title="🛠️ Administration">
+        <div className="flex flex-col items-center justify-center py-16">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Préparation de ton espace…</p>
+        </div>
+      </AssirikShell>
+    );
+  }
+
+  // === AFFICHAGE NORMAL ===
   const statsItems = [
     { label: "Partenaires", value: stats?.partenaires || 0, icon: Building2, color: "text-blue-500", bg: "bg-blue-50" },
     { label: "Missions", value: stats?.missions || 0, icon: TrendingUp, color: "text-purple-500", bg: "bg-purple-50" },
@@ -90,12 +147,18 @@ function AdminDashboard() {
   return (
     <AssirikShell title="🛠️ Administration">
       <div className="space-y-6">
+        {/* En-tête */}
+        <div className="flex items-center gap-3">
+          <LayoutDashboard className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Tableau de bord</h1>
+        </div>
+
         {/* Statistiques */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {statsItems.map((item, index) => {
             const Icon = item.icon;
             return (
-              <Card key={index} className="border-primary/5">
+              <Card key={index} className="border-primary/5 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${item.bg}`}>
