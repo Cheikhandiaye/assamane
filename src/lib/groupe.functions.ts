@@ -1,43 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-const createGroupeSchema = z.object({
-  nom: z.string().min(1),
-  parcours_id: z.string().uuid(),
-  etudiant_ids: z.array(z.string().uuid()).min(1),
-  rapporteur_id: z.string().uuid(),
-});
-
-const membreSchema = z.object({
-  groupe_id: z.string().uuid(),
-  etudiant_id: z.string().uuid(),
-});
-
-const rapporteurSchema = z.object({
-  groupe_id: z.string().uuid(),
-  rapporteur_id: z.string().uuid(),
-});
-
-const studentGroupeSchema = z.object({
-  parcours_id: z.string().uuid().optional().nullable(),
-}).optional();
-
-const submitGroupeCarnetSchema = z.object({
-  groupe_id: z.string().uuid(),
-  module_id: z.string().uuid().optional().nullable(),
-  etape_id: z.string().uuid().optional().nullable(),
-  parcours_id: z.string().uuid().optional().nullable(),
-  contenu: z.unknown(),
-});
 
 // === CRÉER UN GROUPE ===
 export const createGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => createGroupeSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { nom, parcours_id, etudiant_ids, rapporteur_id } = data;
+
+    // Validation manuelle
+    if (!nom || nom.trim().length === 0) {
+      throw new Error("Le nom du groupe est requis");
+    }
+    if (!parcours_id) {
+      throw new Error("Le parcours est requis");
+    }
+    if (!etudiant_ids || etudiant_ids.length < 2) {
+      throw new Error("Un groupe doit avoir au moins 2 étudiants");
+    }
+    if (!rapporteur_id) {
+      throw new Error("Le rapporteur est requis");
+    }
 
     // Seul un prof ou admin peut créer un groupe
     const { data: userRole } = await supabaseAdmin
@@ -54,7 +37,7 @@ export const createGroupe = createServerFn({ method: "POST" })
     const { data: groupe, error: groupeError } = await supabaseAdmin
       .from("groupes")
       .insert({
-        nom,
+        nom: nom.trim(),
         parcours_id,
         rapporteur_id,
         created_by: context.userId,
@@ -99,9 +82,12 @@ export const createGroupe = createServerFn({ method: "POST" })
 // === METTRE À JOUR LE RAPPORTEUR ===
 export const updateGroupeRapporteur = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => rapporteurSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, rapporteur_id } = data;
+
+    if (!groupe_id || !rapporteur_id) {
+      throw new Error("Groupe et rapporteur requis");
+    }
 
     const { data: userRole } = await supabaseAdmin
       .from("user_roles")
@@ -126,9 +112,12 @@ export const updateGroupeRapporteur = createServerFn({ method: "POST" })
 // === AJOUTER UN MEMBRE AU GROUPE ===
 export const addMembreToGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => membreSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, etudiant_id } = data;
+
+    if (!groupe_id || !etudiant_id) {
+      throw new Error("Groupe et étudiant requis");
+    }
 
     const { data: userRole } = await supabaseAdmin
       .from("user_roles")
@@ -152,9 +141,12 @@ export const addMembreToGroupe = createServerFn({ method: "POST" })
 // === RETIRER UN MEMBRE DU GROUPE ===
 export const removeMembreFromGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => membreSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, etudiant_id } = data;
+
+    if (!groupe_id || !etudiant_id) {
+      throw new Error("Groupe et étudiant requis");
+    }
 
     const { data: userRole } = await supabaseAdmin
       .from("user_roles")
@@ -195,7 +187,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
           *,
           parcours (
             id,
-            nom,
+            titre,
             mission_id
           ),
           groupe_membres (
@@ -220,13 +212,24 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
     }
 
     // Professeur voit les groupes des parcours qu'il enseigne
+    const { data: profParcours } = await supabaseAdmin
+      .from("parcours_professeurs")
+      .select("parcours_id")
+      .eq("professeur_id", context.userId);
+
+    const parcoursIds = (profParcours || []).map(p => p.parcours_id);
+
+    if (!parcoursIds || parcoursIds.length === 0) {
+      return [];
+    }
+
     const { data, error } = await supabaseAdmin
       .from("groupes")
       .select(`
         *,
         parcours (
           id,
-            nom,
+          titre,
           mission_id
         ),
         groupe_membres (
@@ -244,11 +247,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
           date_fin
         )
       `)
-      .in("parcours_id", (await supabaseAdmin
-        .from("parcours_professeurs")
-        .select("parcours_id")
-        .eq("professeur_id", context.userId)
-      ).data?.map(p => p.parcours_id) || [])
+      .in("parcours_id", parcoursIds)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -258,7 +257,6 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
 // === RÉCUPÉRER LE GROUPE D'UN ÉTUDIANT ===
 export const getStudentGroupe = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => studentGroupeSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { parcours_id } = data || {};
     
@@ -268,7 +266,7 @@ export const getStudentGroupe = createServerFn({ method: "GET" })
         *,
         parcours (
           id,
-          nom,
+          titre,
           mission_id
         ),
         groupe_membres (
@@ -300,9 +298,12 @@ export const getStudentGroupe = createServerFn({ method: "GET" })
 // === SOUMETTRE UN CARNET DE GROUPE ===
 export const submitGroupeCarnet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => submitGroupeCarnetSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, module_id, etape_id, parcours_id, contenu } = data;
+
+    if (!groupe_id) {
+      throw new Error("Groupe requis");
+    }
 
     // Vérifier que l'utilisateur est le rapporteur du groupe
     const { data: groupe } = await supabaseAdmin
@@ -346,11 +347,13 @@ export const submitGroupeCarnet = createServerFn({ method: "POST" })
     }
 
     // Mettre à jour le suivi du groupe
-    await supabaseAdmin
-      .from("suivi_groupe_module")
-      .update({ statut: "en_attente_validation" })
-      .eq("groupe_id", groupe_id)
-      .eq("module_id", module_id);
+    if (module_id) {
+      await supabaseAdmin
+        .from("suivi_groupe_module")
+        .update({ statut: "en_attente_validation" })
+        .eq("groupe_id", groupe_id)
+        .eq("module_id", module_id);
+    }
 
     return { success: true, count: results.length };
   });
