@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+// src/hooks/use-notifications.ts
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,15 +19,16 @@ export function useNotifications(userId: string | undefined) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const channelRef = useRef<any>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    // Si pas d'userId, arrêter le chargement
+    isMountedRef.current = true;
+
     if (!userId) {
       setIsLoading(false);
       return;
     }
-
-    let isMounted = true;
 
     const loadNotifications = async () => {
       setIsLoading(true);
@@ -42,20 +44,20 @@ export function useNotifications(userId: string | undefined) {
 
         if (fetchError) throw fetchError;
 
-        if (isMounted && data) {
+        if (isMountedRef.current && data) {
           const typedData = data as AppNotification[];
           setNotifications(typedData);
           setUnreadCount(typedData.filter((n) => !n.lu).length);
         }
       } catch (err) {
         console.error("Erreur chargement notifications:", err);
-        if (isMounted) {
+        if (isMountedRef.current) {
           setError(err instanceof Error ? err : new Error("Erreur de chargement"));
           setNotifications([]);
           setUnreadCount(0);
         }
       } finally {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setIsLoading(false);
         }
       }
@@ -63,9 +65,16 @@ export function useNotifications(userId: string | undefined) {
 
     loadNotifications();
 
-    // Souscription Realtime
+    // Supprimer l'ancien channel s'il existe
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Créer un nouveau channel UNIQUE pour cet utilisateur
+    const channelId = `notifs-${userId}-${Date.now()}`;
     const channel = supabase
-      .channel(`notifs_${userId}`)
+      .channel(channelId)
       .on(
         "postgres_changes",
         { 
@@ -76,11 +85,10 @@ export function useNotifications(userId: string | undefined) {
         },
         (payload) => {
           const notif = payload.new as AppNotification;
-          if (isMounted) {
+          if (isMountedRef.current) {
             setNotifications((prev) => [notif, ...prev]);
             setUnreadCount((prev) => prev + 1);
             
-            // Toast selon le type
             if (notif.type === "rejet") {
               toast.error(notif.titre, { description: notif.message });
             } else {
@@ -91,13 +99,18 @@ export function useNotifications(userId: string | undefined) {
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
-          console.log(`🔔 Notifications Realtime activées pour ${userId}`);
+          console.log(`🔔 Notifications Realtime activées pour ${userId} (${channelId})`);
         }
       });
 
+    channelRef.current = channel;
+
     return () => {
-      isMounted = false;
-      supabase.removeChannel(channel);
+      isMountedRef.current = false;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [userId]);
 
