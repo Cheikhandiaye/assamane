@@ -187,7 +187,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
           *,
           parcours (
             id,
-            titre,
+            nom,
             mission_id
           ),
           groupe_membres (
@@ -229,7 +229,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
         *,
         parcours (
           id,
-          titre,
+          nom,
           mission_id
         ),
         groupe_membres (
@@ -259,14 +259,14 @@ export const getStudentGroupe = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { parcours_id } = data || {};
-    
+
     let query = supabaseAdmin
       .from("groupes")
       .select(`
         *,
         parcours (
           id,
-          titre,
+          nom,
           mission_id
         ),
         groupe_membres (
