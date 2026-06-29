@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "~/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "~/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // === NOTES QUIZ ===
 
@@ -114,6 +114,19 @@ export const submitCarnetNote = createServerFn({ method: "POST" })
   });
 
 // === GROUPES ===
+
+export const getStudentNotes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }: { context: any }) => {
+    const { data, error } = await supabaseAdmin
+      .from("notes_finales_module")
+      .select("module_id, parcours_id, note_finale, modules_cours(titre, ordre)")
+      .eq("etudiant_id", context.userId)
+      .order("date_calcul", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  });
 
 export const createGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

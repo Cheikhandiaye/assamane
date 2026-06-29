@@ -33,13 +33,13 @@ interface GroupeMembre {
 interface GroupeData {
   id: string;
   nom: string;
-  rapporteur_id: string;
-  parcours_id: string;
-  created_at: string;
+  rapporteur_id: string | null;
+  parcours_id: string | null;
+  created_at: string | null;
   parcours: {
     id: string;
-    titre: string;
-  };
+    nom: string;
+  } | null;
   groupe_membres: GroupeMembre[];
   suivi_groupe_module: Array<{
     module_id: string;
@@ -51,7 +51,7 @@ interface GroupeData {
 
 interface ParcoursOption {
   id: string;
-  titre: string;
+  nom: string;
 }
 
 export function ProfesseurGroupesList() {
@@ -82,7 +82,7 @@ export function ProfesseurGroupesList() {
     setLoading(true);
     try {
       const data = await getProfessorGroupes({});
-      setGroupes(data || []);
+      setGroupes((data || []) as GroupeData[]);
     } catch (error) {
       console.error("Erreur chargement groupes:", error);
       toast.error("Impossible de charger les groupes");
@@ -97,13 +97,13 @@ export function ProfesseurGroupesList() {
     try {
       const { data } = await supabase
         .from("parcours_professeurs")
-        .select("parcours_id, parcours(id, titre)")
+        .select("parcours_id, parcours(id, nom)")
         .eq("professeur_id", user.id);
       
       if (data) {
         const options = data
           .map((p) => p.parcours)
-          .filter((p): p is { id: string; titre: string } => p !== null);
+          .filter((p): p is { id: string; nom: string } => p !== null);
         setParcoursOptions(options);
       }
     } catch (error) {
@@ -229,7 +229,7 @@ export function ProfesseurGroupesList() {
       // Rafraîchir les disponibles si la boîte de dialogue est ouverte
       const groupe = groupes.find((g) => g.id === groupeId);
       if (groupe) {
-        await fetchAvailableEtudiants(groupeId, groupe.parcours_id);
+        if (groupe.parcours_id) await fetchAvailableEtudiants(groupeId, groupe.parcours_id);
       }
     } catch (error: any) {
       toast.error(error.message || "Erreur");
@@ -249,7 +249,7 @@ export function ProfesseurGroupesList() {
       // Rafraîchir les disponibles
       const groupe = groupes.find((g) => g.id === groupeId);
       if (groupe) {
-        await fetchAvailableEtudiants(groupeId, groupe.parcours_id);
+        if (groupe.parcours_id) await fetchAvailableEtudiants(groupeId, groupe.parcours_id);
       }
     } catch (error: any) {
       toast.error(error.message || "Erreur");
@@ -268,7 +268,7 @@ export function ProfesseurGroupesList() {
 
   const handleOpenManageDialog = async (groupe: GroupeData) => {
     setManageGroupeId(groupe.id);
-    await fetchAvailableEtudiants(groupe.id, groupe.parcours_id);
+    if (groupe.parcours_id) await fetchAvailableEtudiants(groupe.id, groupe.parcours_id);
     setSelectedAddEtudiant("");
     setManageDialogOpen(true);
   };
@@ -364,7 +364,7 @@ export function ProfesseurGroupesList() {
                   <SelectContent>
                     {parcoursOptions.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.titre}
+                        {p.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -383,13 +383,14 @@ export function ProfesseurGroupesList() {
                         >
                           <input
                             type="checkbox"
+                            value={e.id}
                             checked={selectedEtudiants.includes(e.id)}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedEtudiants([...selectedEtudiants, e.id]);
+                                setSelectedEtudiants([...selectedEtudiants, e.currentTarget.value]);
                               } else {
-                                setSelectedEtudiants(selectedEtudiants.filter((id) => id !== e.id));
-                                if (newGroupeRapporteurId === e.id) {
+                                setSelectedEtudiants(selectedEtudiants.filter((id) => id !== e.currentTarget.value));
+                                if (newGroupeRapporteurId === e.currentTarget.value) {
                                   setNewGroupeRapporteurId("");
                                 }
                               }
@@ -477,7 +478,7 @@ export function ProfesseurGroupesList() {
                         </Badge>
                       </CardTitle>
                       <p className="text-xs text-muted-foreground">
-                        {g.parcours?.titre || "Parcours inconnu"}
+                        {g.parcours?.nom || "Parcours inconnu"}
                         <span className="mx-1.5">•</span>
                         {g.suivi_groupe_module?.length || 0} modules
                       </p>

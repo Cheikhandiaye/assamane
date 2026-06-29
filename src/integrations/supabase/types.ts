@@ -316,6 +316,27 @@ export type Database = {
           },
         ]
       }
+      connexions: {
+        Row: {
+          date: string
+          etudiant_id: string
+          id: string
+          streak: number | null
+        }
+        Insert: {
+          date?: string
+          etudiant_id: string
+          id?: string
+          streak?: number | null
+        }
+        Update: {
+          date?: string
+          etudiant_id?: string
+          id?: string
+          streak?: number | null
+        }
+        Relationships: []
+      }
       contenus_module: {
         Row: {
           contenu_texte: string | null
@@ -624,10 +645,15 @@ export type Database = {
           created_by: string | null
           description: string | null
           duplique_depuis: string | null
+          duree_quiz: number | null
           est_global: boolean | null
           id: string
           ordre: number
           parcours_id: string | null
+          penalite_deuxieme_essai: number | null
+          ponderation_carnet: number | null
+          ponderation_quiz: number | null
+          seuil_reussite: number | null
           titre: string
         }
         Insert: {
@@ -636,10 +662,15 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           duplique_depuis?: string | null
+          duree_quiz?: number | null
           est_global?: boolean | null
           id?: string
           ordre: number
           parcours_id?: string | null
+          penalite_deuxieme_essai?: number | null
+          ponderation_carnet?: number | null
+          ponderation_quiz?: number | null
+          seuil_reussite?: number | null
           titre: string
         }
         Update: {
@@ -648,10 +679,15 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           duplique_depuis?: string | null
+          duree_quiz?: number | null
           est_global?: boolean | null
           id?: string
           ordre?: number
           parcours_id?: string | null
+          penalite_deuxieme_essai?: number | null
+          ponderation_carnet?: number | null
+          ponderation_quiz?: number | null
+          seuil_reussite?: number | null
           titre?: string
         }
         Relationships: [
@@ -671,6 +707,147 @@ export type Database = {
           },
           {
             foreignKeyName: "modules_cours_parcours_id_fkey"
+            columns: ["parcours_id"]
+            isOneToOne: false
+            referencedRelation: "parcours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes_carnet: {
+        Row: {
+          date_soumission: string | null
+          etudiant_id: string
+          feedback: string | null
+          id: string
+          module_id: string
+          note: number | null
+          parcours_id: string
+        }
+        Insert: {
+          date_soumission?: string | null
+          etudiant_id: string
+          feedback?: string | null
+          id?: string
+          module_id: string
+          note?: number | null
+          parcours_id: string
+        }
+        Update: {
+          date_soumission?: string | null
+          etudiant_id?: string
+          feedback?: string | null
+          id?: string
+          module_id?: string
+          note?: number | null
+          parcours_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_carnet_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules_cours"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_carnet_parcours_id_fkey"
+            columns: ["parcours_id"]
+            isOneToOne: false
+            referencedRelation: "parcours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes_finales_module: {
+        Row: {
+          date_calcul: string | null
+          etudiant_id: string
+          id: string
+          module_id: string
+          note_carnet: number | null
+          note_finale: number | null
+          note_quiz: number | null
+          parcours_id: string
+        }
+        Insert: {
+          date_calcul?: string | null
+          etudiant_id: string
+          id?: string
+          module_id: string
+          note_carnet?: number | null
+          note_finale?: number | null
+          note_quiz?: number | null
+          parcours_id: string
+        }
+        Update: {
+          date_calcul?: string | null
+          etudiant_id?: string
+          id?: string
+          module_id?: string
+          note_carnet?: number | null
+          note_finale?: number | null
+          note_quiz?: number | null
+          parcours_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_finales_module_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules_cours"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_finales_module_parcours_id_fkey"
+            columns: ["parcours_id"]
+            isOneToOne: false
+            referencedRelation: "parcours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes_quiz: {
+        Row: {
+          date_soumission: string | null
+          etudiant_id: string
+          id: string
+          module_id: string
+          note: number | null
+          parcours_id: string
+          temps_utilise: number | null
+          tentative: number
+        }
+        Insert: {
+          date_soumission?: string | null
+          etudiant_id: string
+          id?: string
+          module_id: string
+          note?: number | null
+          parcours_id: string
+          temps_utilise?: number | null
+          tentative: number
+        }
+        Update: {
+          date_soumission?: string | null
+          etudiant_id?: string
+          id?: string
+          module_id?: string
+          note?: number | null
+          parcours_id?: string
+          temps_utilise?: number | null
+          tentative?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_quiz_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules_cours"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_quiz_parcours_id_fkey"
             columns: ["parcours_id"]
             isOneToOne: false
             referencedRelation: "parcours"
@@ -1077,8 +1254,10 @@ export type Database = {
           etape_id: string | null
           groupe_id: string | null
           id: string
+          module_id: string | null
           nb_tentatives: number | null
           note: number | null
+          note_carnet: number | null
           parcours_id: string | null
           rouverte_le: string | null
           rouverte_par: string | null
@@ -1095,8 +1274,10 @@ export type Database = {
           etape_id?: string | null
           groupe_id?: string | null
           id?: string
+          module_id?: string | null
           nb_tentatives?: number | null
           note?: number | null
+          note_carnet?: number | null
           parcours_id?: string | null
           rouverte_le?: string | null
           rouverte_par?: string | null
@@ -1113,8 +1294,10 @@ export type Database = {
           etape_id?: string | null
           groupe_id?: string | null
           id?: string
+          module_id?: string | null
           nb_tentatives?: number | null
           note?: number | null
+          note_carnet?: number | null
           parcours_id?: string | null
           rouverte_le?: string | null
           rouverte_par?: string | null
@@ -1137,6 +1320,13 @@ export type Database = {
             columns: ["groupe_id"]
             isOneToOne: false
             referencedRelation: "groupes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reponses_groupe_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules_cours"
             referencedColumns: ["id"]
           },
           {
@@ -1296,6 +1486,48 @@ export type Database = {
           },
         ]
       }
+      suivi_groupe_module: {
+        Row: {
+          date_debut: string | null
+          date_fin: string | null
+          groupe_id: string
+          id: string
+          module_id: string
+          statut: string | null
+        }
+        Insert: {
+          date_debut?: string | null
+          date_fin?: string | null
+          groupe_id: string
+          id?: string
+          module_id: string
+          statut?: string | null
+        }
+        Update: {
+          date_debut?: string | null
+          date_fin?: string | null
+          groupe_id?: string
+          id?: string
+          module_id?: string
+          statut?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suivi_groupe_module_groupe_id_fkey"
+            columns: ["groupe_id"]
+            isOneToOne: false
+            referencedRelation: "groupes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suivi_groupe_module_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules_cours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1317,6 +1549,41 @@ export type Database = {
         }
         Relationships: []
       }
+      xp_etudiants: {
+        Row: {
+          date_mise_a_jour: string | null
+          etudiant_id: string
+          id: string
+          niveau: number | null
+          parcours_id: string | null
+          total_xp: number | null
+        }
+        Insert: {
+          date_mise_a_jour?: string | null
+          etudiant_id: string
+          id?: string
+          niveau?: number | null
+          parcours_id?: string | null
+          total_xp?: number | null
+        }
+        Update: {
+          date_mise_a_jour?: string | null
+          etudiant_id?: string
+          id?: string
+          niveau?: number | null
+          parcours_id?: string | null
+          total_xp?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_etudiants_parcours_id_fkey"
+            columns: ["parcours_id"]
+            isOneToOne: false
+            referencedRelation: "parcours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1331,6 +1598,14 @@ export type Database = {
         Returns: boolean
       }
       can_view_profile: { Args: { _target: string }; Returns: boolean }
+      fn_calcul_note_finale_module: {
+        Args: {
+          p_etudiant_id: string
+          p_module_id: string
+          p_parcours_id: string
+        }
+        Returns: number
+      }
       fn_check_badges: {
         Args: { p_etudiant_id: string; p_parcours_id: string }
         Returns: undefined

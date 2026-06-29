@@ -73,7 +73,7 @@ function PartenaireDashboard() {
             *,
             parcours (
               id,
-              titre,
+              nom,
               parcours_etudiants (
                 etudiant_id,
                 profiles (
@@ -110,7 +110,7 @@ function PartenaireDashboard() {
                 .eq("parcours_id", parcours.id);
 
               if (notes && notes.length > 0) {
-                const moyenne = notes.reduce((acc, n) => acc + n.note_finale, 0) / notes.length;
+                const moyenne = notes.reduce((acc, n) => acc + (n.note_finale ?? 0), 0) / notes.length;
                 totalNotes += moyenne;
                 totalModules += notes.length;
               }

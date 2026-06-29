@@ -22,9 +22,44 @@ export default defineConfig({
         devOptions: { enabled: false },
         manifest: false,
         workbox: {
-          navigateFallback: "/",
+          // TanStack Start's Vite 8 multi-environment build does not always
+          // have the client files on disk when the PWA plugin runs closeBundle.
+          // Rely on runtime caching instead of a generated precache manifest so
+          // Workbox never fails with an empty glob result during production build.
+          globPatterns: [],
+          navigateFallback: undefined,
           navigateFallbackDenylist: [/^\/api\//, /^\/~oauth/, /^\/__/],
-          globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
+          runtimeCaching: [
+            {
+              urlPattern: ({ request, url }: { request: Request; url: URL }) =>
+                request.mode === "navigate" &&
+                !url.pathname.startsWith("/api/") &&
+                !url.pathname.startsWith("/~oauth") &&
+                !url.pathname.startsWith("/__"),
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "assirik-pages",
+                networkTimeoutSeconds: 3,
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 24 * 7,
+                },
+              },
+            },
+            {
+              urlPattern: ({ request, url }: { request: Request; url: URL }) =>
+                url.origin === self.location.origin &&
+                ["script", "style", "worker", "font", "image"].includes(request.destination),
+              handler: "CacheFirst",
+              options: {
+                cacheName: "assirik-assets",
+                expiration: {
+                  maxEntries: 150,
+                  maxAgeSeconds: 60 * 60 * 24 * 30,
+                },
+              },
+            },
+          ],
         },
       }),
     ],

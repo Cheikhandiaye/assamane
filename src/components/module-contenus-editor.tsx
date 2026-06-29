@@ -192,7 +192,7 @@ export function ModuleContenusEditor({
           quiz_score_min: seuilReussite,
           quiz_duree_minutes: dureeQuiz,
           quiz_penalite_deuxieme_essai: penaliteDeuxiemeEssai / 100,
-        })
+        } as any)
         .eq("id", item.id);
     }
 

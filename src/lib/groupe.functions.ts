@@ -1,10 +1,41 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "~/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "~/integrations/supabase/client.server";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const createGroupeSchema = z.object({
+  nom: z.string().min(1),
+  parcours_id: z.string().uuid(),
+  etudiant_ids: z.array(z.string().uuid()).min(1),
+  rapporteur_id: z.string().uuid(),
+});
+
+const membreSchema = z.object({
+  groupe_id: z.string().uuid(),
+  etudiant_id: z.string().uuid(),
+});
+
+const rapporteurSchema = z.object({
+  groupe_id: z.string().uuid(),
+  rapporteur_id: z.string().uuid(),
+});
+
+const studentGroupeSchema = z.object({
+  parcours_id: z.string().uuid().optional().nullable(),
+}).optional();
+
+const submitGroupeCarnetSchema = z.object({
+  groupe_id: z.string().uuid(),
+  module_id: z.string().uuid().optional().nullable(),
+  etape_id: z.string().uuid().optional().nullable(),
+  parcours_id: z.string().uuid().optional().nullable(),
+  contenu: z.unknown(),
+});
 
 // === CRÉER UN GROUPE ===
 export const createGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => createGroupeSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { nom, parcours_id, etudiant_ids, rapporteur_id } = data;
 
@@ -68,6 +99,7 @@ export const createGroupe = createServerFn({ method: "POST" })
 // === METTRE À JOUR LE RAPPORTEUR ===
 export const updateGroupeRapporteur = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => rapporteurSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, rapporteur_id } = data;
 
@@ -94,6 +126,7 @@ export const updateGroupeRapporteur = createServerFn({ method: "POST" })
 // === AJOUTER UN MEMBRE AU GROUPE ===
 export const addMembreToGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => membreSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, etudiant_id } = data;
 
@@ -119,6 +152,7 @@ export const addMembreToGroupe = createServerFn({ method: "POST" })
 // === RETIRER UN MEMBRE DU GROUPE ===
 export const removeMembreFromGroupe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => membreSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { groupe_id, etudiant_id } = data;
 
@@ -161,7 +195,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
           *,
           parcours (
             id,
-            titre,
+            nom,
             mission_id
           ),
           groupe_membres (
@@ -192,7 +226,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
         *,
         parcours (
           id,
-          titre,
+            nom,
           mission_id
         ),
         groupe_membres (
@@ -224,6 +258,7 @@ export const getProfessorGroupes = createServerFn({ method: "GET" })
 // === RÉCUPÉRER LE GROUPE D'UN ÉTUDIANT ===
 export const getStudentGroupe = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => studentGroupeSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { parcours_id } = data || {};
     
@@ -233,7 +268,7 @@ export const getStudentGroupe = createServerFn({ method: "GET" })
         *,
         parcours (
           id,
-          titre,
+          nom,
           mission_id
         ),
         groupe_membres (
@@ -265,8 +300,9 @@ export const getStudentGroupe = createServerFn({ method: "GET" })
 // === SOUMETTRE UN CARNET DE GROUPE ===
 export const submitGroupeCarnet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => submitGroupeCarnetSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
-    const { groupe_id, module_id, parcours_id, contenu } = data;
+    const { groupe_id, module_id, etape_id, parcours_id, contenu } = data;
 
     // Vérifier que l'utilisateur est le rapporteur du groupe
     const { data: groupe } = await supabaseAdmin
@@ -293,14 +329,14 @@ export const submitGroupeCarnet = createServerFn({ method: "POST" })
     const results = [];
     for (const membre of membres) {
       const { data: reponse, error } = await supabaseAdmin
-        .from("reponses_etudiant")
+        .from("reponses_groupe")
         .upsert({
-          etudiant_id: membre.etudiant_id,
+          groupe_id,
+          etape_id,
           module_id,
           parcours_id,
           contenu,
           statut: "soumis",
-          type: "carnet",
         })
         .select()
         .single();

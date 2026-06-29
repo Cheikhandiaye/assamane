@@ -1,67 +1,102 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "~/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "~/integrations/supabase/client.server";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const addXPSchema = z.object({
+  etudiant_id: z.string().uuid(),
+  parcours_id: z.string().uuid().optional().nullable(),
+  xp_amount: z.number(),
+  action: z.string().optional(),
+});
+
+const leaderboardSchema = z.object({
+  parcours_id: z.string().uuid().optional().nullable(),
+  limit: z.number().optional(),
+}).optional();
+
+const studentBadgesSchema = z.object({
+  etudiant_id: z.string().uuid().optional(),
+}).optional();
+
+async function addXPInternal(
+  actorUserId: string,
+  payload: z.infer<typeof addXPSchema>,
+) {
+  const { etudiant_id, parcours_id, xp_amount } = payload;
+
+  const { data: userRole } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", actorUserId)
+    .single();
+
+  if (actorUserId !== etudiant_id && !["admin", "professeur"].includes(userRole?.role || "")) {
+    throw new Error("Non autorisé");
+  }
+
+  let existingQuery = supabaseAdmin
+    .from("xp_etudiants")
+    .select("total_xp, niveau")
+    .eq("etudiant_id", etudiant_id);
+
+  existingQuery = parcours_id
+    ? existingQuery.eq("parcours_id", parcours_id)
+    : existingQuery.is("parcours_id", null);
+
+  const { data: existing } = await existingQuery.maybeSingle();
+
+  let total_xp = existing?.total_xp || 0;
+  let niveau = existing?.niveau || 1;
+
+  total_xp += xp_amount;
+  niveau = Math.floor(total_xp / 100) + 1;
+
+  const { data: result, error } = await supabaseAdmin
+    .from("xp_etudiants")
+    .upsert({
+      etudiant_id,
+      parcours_id: parcours_id ?? null,
+      total_xp,
+      niveau,
+      date_mise_a_jour: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    ...result,
+    xp_gagne: xp_amount,
+    niveau_augmente: niveau > (existing?.niveau || 1),
+    ancien_niveau: existing?.niveau || 1,
+  };
+}
 
 // === AJOUTER DE L'XP ===
 export const addXP = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => addXPSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
-    const { etudiant_id, parcours_id, xp_amount, action } = data;
-
-    // Vérifier que l'utilisateur est autorisé (lui-même ou admin/prof)
-    const { data: userRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .single();
-
-    if (context.userId !== etudiant_id && !["admin", "professeur"].includes(userRole?.role || "")) {
-      throw new Error("Non autorisé");
-    }
-
-    // Récupérer l'XP actuel
-    const { data: existing } = await supabaseAdmin
-      .from("xp_etudiants")
-      .select("total_xp, niveau")
-      .eq("etudiant_id", etudiant_id)
-      .eq("parcours_id", parcours_id)
-      .single();
-
-    let total_xp = existing?.total_xp || 0;
-    let niveau = existing?.niveau || 1;
-
-    total_xp += xp_amount;
-
-    // Calculer le niveau (1 niveau = 100 XP)
-    const nouveau_niveau = Math.floor(total_xp / 100) + 1;
-    niveau = nouveau_niveau;
-
-    const { data: result, error } = await supabaseAdmin
-      .from("xp_etudiants")
-      .upsert({
-        etudiant_id,
-        parcours_id,
-        total_xp,
-        niveau,
-        date_mise_a_jour: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Vérifier si le niveau a augmenté pour notification
-    const niveau_augmente = niveau > (existing?.niveau || 1);
-
-    return {
-      ...result,
-      xp_gagne: xp_amount,
-      niveau_augmente,
-      ancien_niveau: existing?.niveau || 1,
-    };
+    return addXPInternal(context.userId, data);
   });
 
 // === ENREGISTRER UNE CONNEXION (Streak) ===
+
+export const getStudentXP = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }: { context: any }) => {
+    const { data, error } = await supabaseAdmin
+      .from("xp_etudiants")
+      .select("*")
+      .eq("etudiant_id", context.userId)
+      .order("total_xp", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  });
+
 export const recordConnexion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }: { context: any }) => {
@@ -94,14 +129,11 @@ export const recordConnexion = createServerFn({ method: "POST" })
 
         // Bonus XP pour le streak (5 XP par jour, doublé après 7 jours)
         const xp_bonus = newStreak >= 7 ? 10 : 5;
-        await addXP({
-          context,
-          data: {
-            etudiant_id: context.userId,
-            parcours_id: null, // XP global
-            xp_amount: xp_bonus,
-            action: "connexion_streak",
-          }
+        await addXPInternal(context.userId, {
+          etudiant_id: context.userId,
+          parcours_id: null,
+          xp_amount: xp_bonus,
+          action: "connexion_streak",
         });
 
         return { streak: newStreak, xp_bonus };
@@ -123,14 +155,11 @@ export const recordConnexion = createServerFn({ method: "POST" })
       if (error) throw error;
 
       // Bonus XP pour première connexion
-      await addXP({
-        context,
-        data: {
-          etudiant_id: context.userId,
-          parcours_id: null,
-          xp_amount: 5,
-          action: "premiere_connexion",
-        }
+      await addXPInternal(context.userId, {
+        etudiant_id: context.userId,
+        parcours_id: null,
+        xp_amount: 5,
+        action: "premiere_connexion",
       });
 
       return { streak: 1, xp_bonus: 5 };
@@ -140,6 +169,7 @@ export const recordConnexion = createServerFn({ method: "POST" })
 // === RÉCUPÉRER LE LEADERBOARD ===
 export const getLeaderboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => leaderboardSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { parcours_id, limit } = data || { limit: 10 };
 
@@ -170,6 +200,7 @@ export const getLeaderboard = createServerFn({ method: "GET" })
 // === RÉCUPÉRER LES BADGES ===
 export const getStudentBadges = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
+  .validator((data) => studentBadgesSchema.parse(data))
   .handler(async ({ context, data }: { context: any; data: any }) => {
     const { etudiant_id } = data || {};
 
