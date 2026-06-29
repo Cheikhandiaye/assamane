@@ -83,7 +83,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "ASSIRIK — Plateforme pédagogique entrepreneuriat" },
       { name: "description", content: "ASSIRIK : la plateforme pédagogique pour apprendre l'entrepreneuriat avec rigueur et passion." },
       { name: "theme-color", content: "#7C3AED" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
+      // ✅ CORRECTION : remplacer apple-mobile-web-app-capable par mobile-web-app-capable
+      { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "ASSIRIK" },
       { property: "og:title", content: "ASSIRIK — Plateforme pédagogique entrepreneuriat" },
@@ -119,7 +120,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <HeadContent />
       </head>
