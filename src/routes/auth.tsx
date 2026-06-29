@@ -21,12 +21,59 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true); // État de vérification
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/app", replace: true });
-    });
+    let isMounted = true;
+    
+    const checkSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        // Si une erreur se produit, on continue vers la page de login
+        if (error) {
+          console.warn("Erreur vérification session:", error);
+          if (isMounted) setIsChecking(false);
+          return;
+        }
+        
+        // Si l'utilisateur est connecté, rediriger
+        if (data?.session) {
+          if (isMounted) {
+            navigate({ to: "/app", replace: true });
+          }
+        } else {
+          if (isMounted) setIsChecking(false);
+        }
+      } catch (err) {
+        // En cas d'erreur, on affiche le formulaire
+        console.warn("Erreur inattendue:", err);
+        if (isMounted) setIsChecking(false);
+      }
+    };
+
+    // Démarrer la vérification avec un petit délai pour éviter les boucles
+    const timer = setTimeout(() => {
+      checkSession();
+    }, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [navigate]);
+
+  // Afficher un écran de chargement pendant la vérification
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center px-4 py-12">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +83,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("✨ Bienvenue !");
+        navigate({ to: "/app", replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -48,9 +96,10 @@ function AuthPage() {
         if (error) throw error;
         toast.success("🎉 Compte créé ! Tu peux te connecter.");
         setMode("signin");
+        setPassword("");
+        setFullName("");
         return;
       }
-      navigate({ to: "/app", replace: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Une erreur est survenue";
       toast.error("❌ " + msg);
@@ -77,34 +126,36 @@ function AuthPage() {
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium text-foreground">Nom complet</span>
               <input
-                id="fullName"                    // ← AJOUTÉ
-                name="fullName"                  // ← AJOUTÉ
+                id="fullName"
+                name="fullName"
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="rounded-xl border border-input bg-background px-4 py-3"
+                disabled={loading}
               />
             </label>
           )}
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium text-foreground">Email</span>
             <input
-              id="email"                        // ← AJOUTÉ
-              name="email"                      // ← AJOUTÉ
+              id="email"
+              name="email"
               type="email"
               required
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="rounded-xl border border-input bg-background px-4 py-3"
+              disabled={loading}
             />
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium text-foreground">Mot de passe</span>
             <input
-              id="password"                     // ← AJOUTÉ
-              name="password"                   // ← AJOUTÉ
+              id="password"
+              name="password"
               type="password"
               required
               minLength={8}
@@ -112,6 +163,7 @@ function AuthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="rounded-xl border border-input bg-background px-4 py-3"
+              disabled={loading}
             />
           </label>
           <button
@@ -119,12 +171,24 @@ function AuthPage() {
             disabled={loading}
             className="mt-2 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-3 text-base font-semibold text-primary-foreground shadow-md transition-all duration-200 hover:opacity-90 disabled:opacity-60"
           >
-            {loading ? "..." : mode === "signin" ? "Se connecter" : "Créer mon compte"}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                {mode === "signin" ? "Connexion..." : "Création..."}
+              </span>
+            ) : (
+              mode === "signin" ? "Se connecter" : "Créer mon compte"
+            )}
           </button>
         </form>
         <button
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          onClick={() => {
+            setMode(mode === "signin" ? "signup" : "signin");
+            setPassword("");
+            setFullName("");
+          }}
           className="mt-6 text-sm text-primary hover:underline w-full text-center"
+          disabled={loading}
         >
           {mode === "signin" ? "Pas encore de compte ? S'inscrire" : "Déjà inscrit ? Se connecter"}
         </button>
