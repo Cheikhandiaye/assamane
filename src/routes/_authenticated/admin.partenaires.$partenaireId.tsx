@@ -57,6 +57,7 @@ function Page() {
     contact_email: "",
   });
 
+  // Chargement des données
   useEffect(() => {
     (async () => {
       const { data: pData, error: pError } = await supabase
@@ -82,6 +83,7 @@ function Page() {
         });
       }
 
+      // Récupérer les missions
       const { data: mData } = await supabase
         .from("missions")
         .select("id, nom, statut, date_debut, date_fin, description")
@@ -172,6 +174,7 @@ function Page() {
       toast.success("Partenaire mis à jour");
       setIsEditing(false);
 
+      // Recharger les données
       const { data: pData } = await supabase
         .rpc("get_partenaire_by_id", { p_id: partenaireId });
       setPartenaire(pData?.[0] || null);
@@ -252,10 +255,14 @@ function Page() {
         </div>
       </div>
 
-      {/* Header partenaire - MODE ÉDITION OU AFFICHAGE */}
+      {/* ============================================ */}
+      {/* HEADER PARTENAIRE - MODE ÉDITION OU AFFICHAGE */}
+      {/* ============================================ */}
       <div className="mb-6 rounded-2xl border border-border bg-card p-5">
         {isEditing ? (
-          // MODE ÉDITION AVEC UPLOAD
+          // ==========================================
+          // MODE ÉDITION AVEC UPLOAD DE LOGO
+          // ==========================================
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -287,7 +294,9 @@ function Page() {
               />
             </div>
 
-            {/* UPLOAD DU LOGO */}
+            {/* ========================================== */}
+            {/* UPLOAD DU LOGO - AVEC BOUTON DE TÉLÉVERSEMENT */}
+            {/* ========================================== */}
             <div className="space-y-2">
               <Label>Logo</Label>
               <div className="flex items-center gap-3 flex-wrap">
@@ -309,6 +318,8 @@ function Page() {
                   className="flex-1 min-w-[200px]"
                 />
               </div>
+
+              {/* Aperçu du logo avec bouton de suppression */}
               {formData.logo_url && (
                 <div className="flex items-center gap-3 p-2 rounded-md border bg-muted/30">
                   <PartnerLogo path={formData.logo_url} alt="Aperçu" className="h-12 w-12 rounded-md object-cover" />
@@ -367,7 +378,9 @@ function Page() {
             </div>
           </div>
         ) : (
+          // ==========================================
           // MODE AFFICHAGE
+          // ==========================================
           <div className="flex items-center gap-4">
             <PartnerLogo
               path={partenaire.logo_url}

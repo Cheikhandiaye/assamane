@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { createUserFn, updateUserFn } from "@/lib/admin-users.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -16,7 +15,6 @@ export interface UserFormValue {
   full_name?: string;
   email?: string;
   role: Role;
-  partenaire_id?: string | null;
 }
 
 export function UserFormDialog({
@@ -40,53 +38,29 @@ export function UserFormDialog({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>(defaultRole);
-  const [partenaireId, setPartenaireId] = useState<string>("");
-  const [partenaires, setPartenaires] = useState<{ id: string; nom: string }[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
-    setName(initial?.full_name ?? "");
-    setEmail(initial?.email ?? "");
-    setPassword("");
-    setRole(initial?.role ?? defaultRole);
-
-    // Liste des partenaires pour le sélecteur
-    supabase
-      .from("partenaires")
-      .select("id, nom")
-      .order("nom")
-      .then(({ data }) => setPartenaires(data ?? []));
-
-    // Pré-remplissage du partenaire : depuis initial si fourni, sinon depuis la base en édition
-    if (initial?.partenaire_id !== undefined) {
-      setPartenaireId(initial.partenaire_id ?? "");
-    } else if (initial?.user_id) {
-      supabase
-        .from("profiles")
-        .select("partenaire_id")
-        .eq("id", initial.user_id)
-        .maybeSingle()
-        .then(({ data }) => setPartenaireId(data?.partenaire_id ?? ""));
-    } else {
-      setPartenaireId("");
+    if (open) {
+      setName(initial?.full_name ?? "");
+      setEmail(initial?.email ?? "");
+      setPassword("");
+      setRole(initial?.role ?? defaultRole);
     }
   }, [open, initial, defaultRole]);
 
   const editing = !!initial?.user_id;
-  const showPartenaire = role === "etudiant" || role === "partenaire";
 
   async function submit() {
     if (!full_name.trim() || !email.trim()) { toast.error("Nom et email requis"); return; }
     if (!editing && password.length < 8) { toast.error("Mot de passe : 8 caractères min."); return; }
     setSaving(true);
-    const effectivePartenaire = showPartenaire ? (partenaireId || null) : null;
     try {
       if (editing && initial?.user_id) {
-        await updateU({ data: { user_id: initial.user_id, full_name, email, password: password || undefined, role, partenaire_id: effectivePartenaire } });
+        await updateU({ data: { user_id: initial.user_id, full_name, email, password: password || undefined, role } });
         toast.success("Utilisateur mis à jour");
       } else {
-        await createU({ data: { full_name, email, password, role, partenaire_id: effectivePartenaire } });
+        await createU({ data: { full_name, email, password, role } });
         toast.success("Utilisateur créé");
       }
       onSaved();
@@ -118,26 +92,6 @@ export function UserFormDialog({
               <option value="admin">Admin</option>
             </select>
           </div>
-          {showPartenaire && (
-            <div>
-              <Label>Partenaire {role === "etudiant" ? "(de rattachement)" : ""}</Label>
-              <select
-                className="w-full rounded-md border border-input bg-background p-2 text-sm"
-                value={partenaireId}
-                onChange={(e) => setPartenaireId(e.target.value)}
-              >
-                <option value="">— Aucun partenaire —</option>
-                {partenaires.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nom}</option>
-                ))}
-              </select>
-              {role === "etudiant" && !partenaireId && (
-                <p className="mt-1 text-xs text-amber-600">
-                  Sans partenaire, aucun prof ne pourra l'inscrire à un parcours.
-                </p>
-              )}
-            </div>
-          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Annuler</Button>
