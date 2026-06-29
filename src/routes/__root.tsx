@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -83,7 +83,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "ASSIRIK — Plateforme pédagogique entrepreneuriat" },
       { name: "description", content: "ASSIRIK : la plateforme pédagogique pour apprendre l'entrepreneuriat avec rigueur et passion." },
       { name: "theme-color", content: "#7C3AED" },
-      // ✅ CORRECTION : remplacer apple-mobile-web-app-capable par mobile-web-app-capable
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "ASSIRIK" },
@@ -135,16 +134,26 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const isMounted = useRef(false);
 
   useEffect(() => {
+    // Éviter les exécutions multiples
+    if (isMounted.current) return;
+    isMounted.current = true;
+
     registerPwa();
+
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
-    return () => sub.subscription.unsubscribe();
-  }, [router, queryClient]);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      isMounted.current = false;
+    };
+  }, []); // ← Tableau de dépendances VIDE pour n'exécuter qu'une fois
 
   return (
     <QueryClientProvider client={queryClient}>
