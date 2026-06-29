@@ -5,7 +5,8 @@ import { useRoleGuard } from "@/hooks/use-role-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Loader2, NotebookPen, Users, CalendarCheck } from "lucide-react";
+import { BookOpen, Loader2, NotebookPen, Users, CalendarCheck, UsersRound } from "lucide-react";
+import { ParcoursGroupesDialog } from "@/components/parcours-groupes-dialog";
 
 export const Route = createFileRoute("/_authenticated/professeur/parcours/$parcoursId")({
   component: Page,
@@ -22,6 +23,7 @@ function Page() {
   const [modules, setModules] = useState<Module[]>([]);
   const [etudiants, setEtudiants] = useState<EtuRow[]>([]);
   const [sessions, setSessions] = useState<{ id: string; date_session: string; statut: string | null }[]>([]);
+  const [groupesOpen, setGroupesOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -64,6 +66,11 @@ function Page() {
     return <AssirikShell title="Parcours"><Loader2 className="mx-auto animate-spin text-primary" /></AssirikShell>;
   }
 
+  const etudiantsOptions = etudiants.map((e) => ({
+    id: e.etudiant_id,
+    full_name: e.profiles?.full_name ?? e.profiles?.email ?? "Étudiant",
+  }));
+
   return (
     <AssirikShell title={`📘 ${parcours?.nom ?? "Parcours"}`}>
       <div className="space-y-6">
@@ -92,7 +99,12 @@ function Page() {
         </section>
 
         <section>
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold"><Users size={18} className="text-primary" />Étudiants inscrits ({etudiants.length})</h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 text-lg font-bold"><Users size={18} className="text-primary" />Étudiants inscrits ({etudiants.length})</h2>
+            <Button size="sm" variant="outline" onClick={() => setGroupesOpen(true)}>
+              <UsersRound size={14} className="mr-1" />Gérer les groupes
+            </Button>
+          </div>
           <div className="overflow-hidden rounded-xl border border-border bg-card">
             <table className="w-full text-sm">
               <thead className="bg-muted text-left text-xs uppercase">
@@ -133,6 +145,14 @@ function Page() {
           </div>
         </section>
       </div>
+
+      <ParcoursGroupesDialog
+        parcoursId={parcoursId}
+        parcoursNom={parcours?.nom ?? "Parcours"}
+        etudiants={etudiantsOptions}
+        open={groupesOpen}
+        onOpenChange={setGroupesOpen}
+      />
     </AssirikShell>
   );
 }
