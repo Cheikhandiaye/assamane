@@ -1627,14 +1627,10 @@ export type Database = {
         Returns: string
       }
       fn_parcours_attestation: {
-        Args: { _etudiant_id: string; _parcours_id: string }
-        Returns: {
-          complete: boolean
-          completed_at: string
-          deadline: string
-          within_deadline: boolean
-        }[]
+        Args: { p_etudiant_id: string; p_parcours_id: string }
+        Returns: Json
       }
+      get_admin_stats: { Args: never; Returns: Json }
       get_all_partenaires: {
         Args: never
         Returns: {
@@ -1675,6 +1671,26 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_professor_stats: { Args: { p_professeur_id: string }; Returns: Json }
+      get_professor_students: {
+        Args: { p_professeur_id: string }
+        Returns: {
+          avatar_url: string
+          badges_count: number
+          email: string
+          etudiant_id: string
+          full_name: string
+          modules_total: number
+          modules_valides: number
+          note_moyenne: number
+          parcours_id: string
+          parcours_titre: string
+          progression: number
+          statut: string
+        }[]
+      }
+      get_user_profile: { Args: { p_user_id: string }; Returns: Json }
+      get_user_role: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1682,7 +1698,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: { Args: never; Returns: boolean }
+      is_admin:
+        | { Args: never; Returns: boolean }
+        | { Args: { user_id: string }; Returns: boolean }
       is_partenaire_of_mission: {
         Args: { _mission_id: string }
         Returns: boolean
