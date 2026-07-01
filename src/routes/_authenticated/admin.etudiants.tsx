@@ -5,9 +5,10 @@ import { useRoleGuard } from "@/hooks/use-role-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Users, Loader2, Pencil, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, Loader2, Pencil, Trash2, Plus, RotateCcw, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { exportCSV } from "@/lib/exports";
 import { UserFormDialog, type UserFormValue } from "@/components/user-form-dialog";
+import { ImportStudentsDialog } from "@/components/import-students-dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { deleteUserFn } from "@/lib/admin-users.functions";
 import { resetCarnet } from "@/lib/reset-carnet.functions";
@@ -93,6 +94,7 @@ function Page() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<UserFormValue | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const delU = useServerFn(deleteUserFn);
 
   async function load() {
@@ -176,6 +178,9 @@ function Page() {
         </Button>
         <Button onClick={() => { setEditing(null); setOpen(true); }}>
           <Plus size={14} className="mr-1" />Nouvel étudiant
+        </Button>
+        <Button variant="outline" onClick={() => setImportOpen(true)}>
+          <Upload size={14} className="mr-1" />Importer CSV
         </Button>
       </div>
 
@@ -267,6 +272,11 @@ function Page() {
         initial={editing}
         defaultRole="etudiant"
         onSaved={load}
+      />
+      <ImportStudentsDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={load}
       />
     </AssirikShell>
   );
