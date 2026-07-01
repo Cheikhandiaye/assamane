@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Library, Loader2, Plus, Pencil, Trash2, ListChecks } from "lucide-react";
+import { Library, Loader2, Plus, Pencil, Trash2, ListChecks, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleContenusEditor } from "@/components/module-contenus-editor";
+import { AiModuleImportDialog } from "@/components/ai-module-import-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/bibliotheque")({ component: Page });
 
@@ -23,6 +24,7 @@ function Page() {
   const [edit, setEdit] = useState<any | null>(null);
   const [form, setForm] = useState({ titre: "", description: "", ordre: 1, categorie: "" });
   const [editingContenus, setEditingContenus] = useState<{ id: string; titre: string } | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
 
   async function load() {
     const { data } = await supabase
@@ -78,7 +80,12 @@ function Page() {
     <AssirikShell title="📚 Bibliothèque de modules">
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Modules pédagogiques globaux, catégorisés et duplicables sur n'importe quel parcours.</p>
-        <Button onClick={openNew}><Plus size={14} className="mr-1" />Ajouter un module global</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setAiOpen(true)}>
+            <Sparkles size={14} className="mr-1" />Importer & enrichir par IA
+          </Button>
+          <Button onClick={openNew}><Plus size={14} className="mr-1" />Ajouter un module global</Button>
+        </div>
       </div>
 
       {loading ? (
@@ -150,6 +157,8 @@ function Page() {
         onOpenChange={(o) => !o && setEditingContenus(null)}
         onChanged={load}
       />
+
+      <AiModuleImportDialog open={aiOpen} onOpenChange={setAiOpen} onDone={load} />
     </AssirikShell>
   );
 }
